@@ -1,8 +1,22 @@
 #!/bin/bash
-# Management console for hide.me VPN
+####################################################################################################
+# Interactive management console for hide.me VPN for Linux CLI
 # Written by @Jynx
+# https://github.com/jynxified
+# jynxified@proton.me
+# 
+# History:
 # 1.0.1 (2026-07-09) - Added actions "shuffle", "next", and "dexit"; added help texts
 # 1.0.0 (2026-07-07) - Initial version
+#
+# Disclaimer:
+# This script is provided "as is" without any warranty of any kind, either expressed or implied.
+# Use it entirely at your own risk. The author (that's me) shall not be liable for any damages,
+# data loss, system failures, or serious trouble you, your relatives, their neighbours or beloved
+# pets might get into caused by the use or misuse of this script.
+#
+# Licensed under "CC BY-NC-ND 4.0" (https://creativecommons.org/licenses/by-nc-nd/4.0/).
+####################################################################################################
 
 # Text colors
 BOLD_BLUE="\e[1;34m"
@@ -27,11 +41,14 @@ HIDEME_LOC_ELEMENT_ID="ml-1 u-bold"
 # Array of fetched hide.me VPN locations
 HIDEME_LOC_LIST=()
 
-#
+####################################################################################################
 # Functions
-#
+####################################################################################################
 
 # Get current WAN IP with region and country
+#
+# Input parameters:
+#  -none-
 function getWanIpAndRegion {
 	WAN_IP=$(curl -s https://api.ipify.org)
 	IP_REGION=$(curl -s ipinfo.io/$WAN_IP/region)
@@ -40,12 +57,18 @@ function getWanIpAndRegion {
 }
 
 # Get current VPN (if connected to any)
+#
+# Input parameters:
+#  -none-
 function getCurrentVpn {
 	HIDEME_SERVICE_CLEANUP_PATTERN="s/^.*$(echo "$HIDEME_SERVICE_NAME" | sed 's/[.]/\\./g')@//g"
 	echo -n "$(systemctl list-units --type=service --state=running | fgrep "$HIDEME_SERVICE_NAME" | sed -e "$HIDEME_SERVICE_CLEANUP_PATTERN" -e 's/\.service.*$//g')"
 }
 
 # Get current VPN status
+#
+# Input parameters:
+#  -none-
 function getVpnStatus {
 	CURRENT_VPN=$(getCurrentVpn)
 	if [ "$CURRENT_VPN" != "" ]
@@ -58,6 +81,9 @@ function getVpnStatus {
 
 # Get a list of all available hide.me VPN locations in alphabetical order. This list is fetched
 # from the official hide.me website to ensure it's as up to date as possible.
+#
+# Input parameters:
+#  -none-
 function getVpnList {
 	IFS_BACKUP=$IFS
 	IFS=$'\n'
@@ -74,8 +100,11 @@ function getVpnList {
 }
 
 # Connect to a VPN location
-# param 1: Name or ID of the hide.me location to connect to
+#
+# Input parameters:
+#  - [1] : Name or ID of the hide.me location to connect to
 function connectVpn {
+
 	NEW_VPN=$1
 	if [[ "$NEW_VPN" =~ ^[0-9]+$ ]] # ID of location
 	then
@@ -92,10 +121,17 @@ function connectVpn {
 	then
 	    if printf '%s\0' "${HIDEME_LOC_LIST[@]}" | grep -qFxz "$NEW_VPN"
 	    then
-	    	disconnectVpn
-	        systemctl start hide.me@$NEW_VPN
-	        if [ $? != 0 ]; then
-	            echo -e " ${RED}Failed to connect to '${BLUE}$NEW_VPN${RED}'${NC} (error code $?)"
+	        if [ "$NEW_VPN" != "$(getCurrentVpn)" ]
+	        then
+	    
+	        	disconnectVpn
+	            systemctl start hide.me@$NEW_VPN
+	            if [ $? != 0 ]; then
+	                echo -e " ${RED}Failed to connect to '${BLUE}$NEW_VPN${RED}'${NC} (error code $?)"
+	            fi
+	            
+	        else
+	            echo -e " ${RED}You are already connected to '${BLUE}$NEW_VPN${RED}'${NC}"
 	        fi
 	    else
 	        echo -e " ${RED}Unknown location '${BLUE}$NEW_VPN${RED}'${NC}"
@@ -106,6 +142,9 @@ function connectVpn {
 # Select a random VPN location and ensure it's not the same as as the currently used one (if any).
 # The function does a limited number of retries (5) to select a unique, unused location, otherwise
 # it returns an empty string.
+#
+# Input parameters:
+#  -none-
 function shuffleVpnLocation {
 
     CURRENT_LOC=$(getCurrentVpn)
@@ -130,6 +169,9 @@ function shuffleVpnLocation {
 # Select the ID of the VPN location that is following the current one in the sorted list of locations.
 # If no connection is established yet, the first location is picked. Also, if the last location of the
 # list was reached, the ID switches back to the first one.
+#
+# Input parameters:
+#  -none-
 function nextVpnLocationId {
 
     NEW_LOC_ID=1
@@ -160,6 +202,9 @@ function nextVpnLocationId {
 }
 
 # Disconnect the current VPN (if any)
+#
+# Input parameters:
+#  -none-
 function disconnectVpn {
 	CURRENT_VPN=$(getCurrentVpn);
 	if [ "$CURRENT_VPN" != "" ]
@@ -172,7 +217,9 @@ function disconnectVpn {
 }
 
 # Prints a detailed help text for a specific action
-# param 1: The action a help is requested for
+#
+# Input parameters:
+#  - [1] : The action a help is requested for
 function helpForAction {
 
     ACTION_NAME=$1
@@ -230,9 +277,9 @@ function helpForAction {
     fi
 }
 
-#
+####################################################################################################
 # Main code
-#
+####################################################################################################
 
 echo 
 echo -e "${BOLD_BLUE}-------------------------------------------------------${NC}"
