@@ -245,11 +245,11 @@ By the way, in case you haven't figured it out yourself: the "d" in "dexit" stan
 
 "`dexit`" or "`x`" will both do the trick here. Wait ... what? Why "x", you ask? Why not "d"? Because "d" is already taken!
 
-## Disclaimer
+## ## Disclaimer
 
 The hide.me/console is provided "as is" without any warranty of any kind, either expressed or implied. Use it entirely at your own risk. The author (that's me) shall not be liable for any damages, data loss, system failures, or serious trouble you, your relatives, their neighbours or beloved pets might get into caused by the use or misuse of it.
 
-## License
+## ## License
 
 This project is licensed under **[CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/)** (Attribution-NonCommercial-NoDerivatives). 
 
@@ -261,7 +261,7 @@ In terms normal humans can understand, this means:
 
 When in doubt, just hit me up. Most people say I'm a nice guy. (The others were never heard from again.)
 
-## Contact
+## ## Contact
 
 What a brilliant transition: here is my contact info in case you want to get in, well, contact with me.
 
