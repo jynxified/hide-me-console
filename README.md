@@ -5,7 +5,7 @@ ____     _     _     _                             __                       _   
   > > > | '_ \| |/ _` |/ _ \ | '_ ` _ \ / _ \   / / __/ _ \| '_ \/ __|/ _ \| |/ _ \ < < <  
  / / /  | | | | | (_| |  __/_| | | | | |  __/  / / (_| (_) | | | \__ \ (_) | |  __/  \ \ \ 
 /_/_/   |_| |_|_|\__,_|\___(_)_| |_| |_|\___| /_/ \___\___/|_| |_|___/\___/|_|\___|   \_\_\
-																	       @Jynx                                                                 
+											             Version 1.0.5			 @Jynx                                                                 
 ```
 
 # ## hide.me/console
@@ -25,6 +25,15 @@ Here's how it looks like...
 - **Silence isn't golden:** Detailed status message on current VPN connection status, including WAN IP, region, and country information.
 - **Helping hand:** Integrated help for all actions.
 - **Soft landing:** Doesn't destroy your life in case you do something wrong or stupid, but helps you gracefully instead.
+
+## ## What's new in Version 1.0.5?
+
+Fueled by sleepless nights and way too much coffee, I spared no expense or effort to bring you the following changes:
+
+* **Cool new action to play with:** The `locations` action has been added to the interactive console so you can fetch and view the full list of VPN locations at any time. Curious? Then check out the details in the main guide below.
+* **Location name normalization, AKA grudgingly necessary bugfix:** VPN locations with weird special characters in their names—like "à", "ñ", or God knows what else (thanks a lot, France & Co.!)—are now automatically normalized because the hide.me service can't handle them. In other words: connecting to these locations is only possible if special characters are normalized, i.e. "à" becomes "a", "ñ" becomes "n", and so on. That’s exactly what happens now. Automatically. No voodoo required (anymore).
+* **Removing zombie units, AKA grudgingly necessary bugfix, part 2:** If a connection to a VPN location fails (for instance, because its name wasn't normalized...), hide.me leaves behind a rather weird "zombie unit"" that serves no purpose whatsoever—other than blocking all future VPN connections. Only hide.me knows why that’s even a thing. In any case, the script now tries its absolute best to clean up those zombies.
+* **Pleasing the customer (that's you!):** General error handling and console logging of the script was polished up a bit.
 
 ## ## Prerequisites
 
@@ -82,7 +91,7 @@ You can run the script as a regular user or using `sudo`. Using `sudo` prevents 
 
 The script does not take any launch arguments; it doesn't need to. Everything related to hide.me is handled via inputs directly within the hide.me/console. It's an interactive tool, remember? (In case you don't remember, please skip back to the beginning of this document and start reading again.)
 
-**| Pro tip for particularly cool (or lazy) people |**
+**Pro tip for particularly cool (or lazy) people**
 
 Create an alias for the script in your `.bashrc` or `.zshrc` file—or whatever shell and Linux distribution you're a fan of and are using and however the corresponding rc file is named there. Such an alias makes your VPN-based life much easier and convenient.
 
@@ -194,6 +203,16 @@ The info action displays whether a connection to a VPN location is currently act
 
 For anyone who still hasn't grasped the concept by now: This action can either be written out in full ("`info`"), or abbreviated as just "`i`" (yes, I keep copying and pasting this line; I told you, I'm lazy.).
 
+**| List VPN locations |**
+
+```
+l | locations 
+```
+
+This action does the exact same thing that happens when the script starts—the part you see near the top of the console: it fetches all available VPN locations from the hide.me website and displays them. I figured this might come in handy if you switch locations often and the original list has scrolled way off your screen. If you disagree, feel free to ignore and forget this action ever existed. Just pretend it’s not there.
+
+Surprise, surprise: This action can either be written out in full ("`locations`"), or abbreviated as just "`l`".
+
 **| Help on actions |**
 
 ```
@@ -247,3 +266,9 @@ When in doubt, just hit me up. Most people say I'm a nice guy. (The others were 
 What a brilliant transition: here is my contact info in case you want to get in, well, contact with me.
 
 [jynxified@proton.me](jynxified@proton.me)
+
+## ## History
+
+* **1.0.5 (2026-07-24):** Added action "locations"; added removal of "zombie" units; improved handling of locations with names that contain special characters; improved error handling; user experience and script feedback slightly improved.
+* **1.0.1 (2026-07-09):** Added actions "shuffle", "next", and "dexit"; added help texts.
+* **1.0.0 (2026-07-07):** Initial version.

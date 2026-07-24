@@ -6,8 +6,11 @@
 # jynxified@proton.me
 # 
 # History:
-# 1.0.1 (2026-07-09) - Added actions "shuffle", "next", and "dexit"; added help texts
-# 1.0.0 (2026-07-07) - Initial version
+# 1.0.5 (2026-07-24) - Added action "locations"; added removal of "zombie" units; improved handling
+#                      of locations with names that contain special characters; improved error handling;
+#                      user experience and script feedback slightly improved.
+# 1.0.1 (2026-07-09) - Added actions "shuffle", "next", and "dexit"; added help texts.
+# 1.0.0 (2026-07-07) - Initial version.
 #
 # Disclaimer:
 # This script is provided "as is" without any warranty of any kind, either expressed or implied.
@@ -45,31 +48,31 @@ HIDEME_LOC_LIST=()
 # Functions
 ####################################################################################################
 
+#
 # Get current WAN IP with region and country
 #
-# Input parameters:
-#  -none-
 function getWanIpAndRegion {
+
 	WAN_IP=$(curl -s https://api.ipify.org)
 	IP_REGION=$(curl -s ipinfo.io/$WAN_IP/region)
 	IP_COUNTRY=$(curl -s ipinfo.io/$WAN_IP/country)
 	echo -ne "${MAGENTA}$WAN_IP${YELLOW}/$IP_REGION${NC}/$IP_COUNTRY"
 }
 
+#
 # Get current VPN (if connected to any)
 #
-# Input parameters:
-#  -none-
 function getCurrentVpn {
+
 	HIDEME_SERVICE_CLEANUP_PATTERN="s/^.*$(echo "$HIDEME_SERVICE_NAME" | sed 's/[.]/\\./g')@//g"
 	echo -n "$(systemctl list-units --type=service --state=running | fgrep "$HIDEME_SERVICE_NAME" | sed -e "$HIDEME_SERVICE_CLEANUP_PATTERN" -e 's/\.service.*$//g')"
 }
 
+#
 # Get current VPN status
 #
-# Input parameters:
-#  -none-
 function getVpnStatus {
+
 	CURRENT_VPN=$(getCurrentVpn)
 	if [ "$CURRENT_VPN" != "" ]
 	then
@@ -79,17 +82,19 @@ function getVpnStatus {
 	fi
 }
 
+#
 # Get a list of all available hide.me VPN locations in alphabetical order. This list is fetched
 # from the official hide.me website to ensure it's as up to date as possible.
 #
-# Input parameters:
-#  -none-
 function getVpnList {
+
+    printf "\r ${YELLOW}${BLINK}Fetching VPN locations...${NC}\r"
+
 	IFS_BACKUP=$IFS
 	IFS=$'\n'
 	LOC_CNTR=1
 	HIDEME_LOC_CLEANUP_PATTERN="s/^.*$HIDEME_LOC_ELEMENT_ID\">//g"
-	HIDEME_LOC_LIST=(`curl -s $HIDEME_LOC_LIST_URL | fgrep "$HIDEME_LOC_ELEMENT_ID" | sed -e "$HIDEME_LOC_CLEANUP_PATTERN" -e 's/,.*$//g' -e 's/ //g' | sort`)
+	HIDEME_LOC_LIST=(`curl -s $HIDEME_LOC_LIST_URL | fgrep "$HIDEME_LOC_ELEMENT_ID" | sed -e "$HIDEME_LOC_CLEANUP_PATTERN" -e 's/,.*$//g' -e 's/ //g' | sed 'y/àáâãäåăèéêëìíîïòóôõöùúûüşçñ/aaaaaaaeeeeiiiiooooouuuuscn/' | sort`)
 	for HIDEME_LOC in ${HIDEME_LOC_LIST[@]}
 	do
 	    echo -e "$(printf "[%2d]" $LOC_CNTR) ${BLUE}\"$HIDEME_LOC\"${NC}*"
@@ -99,10 +104,12 @@ function getVpnList {
 	IFS=$IFS_BACKUP
 }
 
-# Connect to a VPN location
+#
+# Connect to a VPN location.
 #
 # Input parameters:
 #  - [1] : Name or ID of the hide.me location to connect to
+#
 function connectVpn {
 
 	NEW_VPN=$1
@@ -121,13 +128,21 @@ function connectVpn {
 	then
 	    if printf '%s\0' "${HIDEME_LOC_LIST[@]}" | grep -qFxz "$NEW_VPN"
 	    then
-	        if [ "$NEW_VPN" != "$(getCurrentVpn)" ]
+	        CURRENT_VPN="$(getCurrentVpn)"
+	        if [ "$NEW_VPN" != "$CURRENT_VPN" ]
 	        then
 	    
 	        	disconnectVpn
-	            systemctl start hide.me@$NEW_VPN
-	            if [ $? != 0 ]; then
-	                echo -e " ${RED}Failed to connect to '${BLUE}$NEW_VPN${RED}'${NC} (error code $?)"
+	        	SERVICE_NAME=$(systemd-escape "$NEW_VPN")
+	            systemctl start "hide.me@$SERVICE_NAME"
+	            ERROR_CODE=$?
+	            if [ $ERROR_CODE != 0 ]
+	            then
+	                echo -e " ${RED}Failed to connect to '${BLUE}$NEW_VPN${RED}'${NC} (error code $ERROR_CODE)"
+	                #if [[ "$(systemctl list-units --type=service | fgrep "$HIDEME_SERVICE_NAME" | grep -c "$SERVICE_NAME")" != "0" ]]
+	                #then
+	                    systemctl stop "hide.me@$SERVICE_NAME" # To clean up zombie units
+	                #fi
 	            fi
 	            
 	        else
@@ -139,12 +154,11 @@ function connectVpn {
 	fi
 }
 
+#
 # Select a random VPN location and ensure it's not the same as as the currently used one (if any).
 # The function does a limited number of retries (5) to select a unique, unused location, otherwise
 # it returns an empty string.
 #
-# Input parameters:
-#  -none-
 function shuffleVpnLocation {
 
     CURRENT_LOC=$(getCurrentVpn)
@@ -166,12 +180,11 @@ function shuffleVpnLocation {
     echo -n "$SELECTED_SHUFFLE_LOC"
 }
 
+#
 # Select the ID of the VPN location that is following the current one in the sorted list of locations.
 # If no connection is established yet, the first location is picked. Also, if the last location of the
 # list was reached, the ID switches back to the first one.
 #
-# Input parameters:
-#  -none-
 function nextVpnLocationId {
 
     NEW_LOC_ID=1
@@ -201,25 +214,28 @@ function nextVpnLocationId {
     echo -n "$NEW_LOC_ID"
 }
 
+#
 # Disconnect the current VPN (if any)
 #
-# Input parameters:
-#  -none-
 function disconnectVpn {
-	CURRENT_VPN=$(getCurrentVpn);
+	CURRENT_VPN="$(getCurrentVpn)";
 	if [ "$CURRENT_VPN" != "" ]
 	then
-		systemctl stop hide.me@$CURRENT_VPN
-		if [ $? != 0 ]; then
-		    echo -e " ${RED}Failed to disconnect from '${BLUE}$CURRENT_VPN${RED}'${NC} (error code $?)"
+	    SERVICE_NAME=$(systemd-escape "$CURRENT_VPN")
+		systemctl stop "hide.me@$SERVICE_NAME"
+		ERROR_CODE=$?
+		if [ $ERROR_CODE != 0 ]; then
+		    echo -e " ${RED}Failed to disconnect from '${BLUE}$CURRENT_VPN${RED}'${NC} (error code $ERROR_CODE)"
 		fi
 	fi
 }
 
+#
 # Prints a detailed help text for a specific action
 #
 # Input parameters:
 #  - [1] : The action a help is requested for
+#
 function helpForAction {
 
     ACTION_NAME=$1
@@ -254,6 +270,10 @@ function helpForAction {
         echo -e " ${BOLD_MAGENTA}Syntax: i[nfo]${NC}"
         echo -e "    This action prints the VPN connection status, i.e. if a connection is currently established,"
         echo -e "    and how the WAN IP currently looks like."
+    elif [ "$ACTION_NAME" == "l" ] || [ "$ACTION_NAME" == "locations" ]
+    then
+        echo -e " ${BOLD_MAGENTA}Syntax: l[ocations]${NC}"
+        echo -e "    This action refreshes the list of available VPN locations and displays it."
     elif [ "$ACTION_NAME" == "h" ] || [ "$ACTION_NAME" == "help" ]
     then
         echo -e " ${BOLD_MAGENTA}Syntax: h[elp] <action>${NC}"
@@ -285,7 +305,7 @@ echo
 echo -e "${BOLD_BLUE}-------------------------------------------------------${NC}"
 echo -e "${BOLD_BLUE}----::::       >>   ${MAGENTA}hide${WHITE}.me${BOLD_BLUE}/${YELLOW}console${BOLD_BLUE}   <<       ::::----${NC}"
 echo -e "${BOLD_BLUE}-------------------------------------------------------${NC}"
-echo -e "                                  | 1.0.1 | ${BLUE}by ${YELLOW}@${BLUE}Jynx${NC}"
+echo -e "                                  | 1.0.5 | ${BLUE}by ${YELLOW}@${BLUE}Jynx${NC}"
 echo
 echo " Current VPN status : $(getVpnStatus)"
 echo
@@ -304,6 +324,7 @@ echo -e "   ${YELLOW} d | disconnect${NC}\t\tDisconnect current VPN location"
 echo -e "   ${YELLOW} s | shuffle${NC}\t\t\tConnect to a random VPN location"
 echo -e "   ${YELLOW} n | next${NC}\t\t\tConnect to VPN location following the current one"
 echo -e "   ${YELLOW} i | info ${NC}\t\t\tPrint info on connection status"
+echo -e "   ${YELLOW} l | locations${NC}\t\tRefresh and show available VPN locations"
 echo -e "   ${YELLOW} h | help <action>${NC}\t\tPrint help for console action"
 echo -e "   ${YELLOW} e | exit${NC}\t\t\tExit VPN console"
 echo -e "   ${YELLOW} x | dexit${NC}\t\t\tDisconnect current VPN location and exit console"
@@ -366,6 +387,13 @@ do
 	
 		echo -e " $(getVpnStatus)"
 
+	elif [ "$HIDEME_ACTION" == "locations" ] || [ "$HIDEME_ACTION" == "l" ] # Action: locations
+	then
+	
+	    echo
+		getVpnList
+		echo
+		
 	elif [ "$HIDEME_ACTION" == "exit" ] || [ "$HIDEME_ACTION" == "e" ] # Action: exit
 	then
 
