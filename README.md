@@ -5,7 +5,7 @@ ____     _     _     _                             __                       _   
   > > > | '_ \| |/ _` |/ _ \ | '_ ` _ \ / _ \   / / __/ _ \| '_ \/ __|/ _ \| |/ _ \ < < <  
  / / /  | | | | | (_| |  __/_| | | | | |  __/  / / (_| (_) | | | \__ \ (_) | |  __/  \ \ \ 
 /_/_/   |_| |_|_|\__,_|\___(_)_| |_| |_|\___| /_/ \___\___/|_| |_|___/\___/|_|\___|   \_\_\
-											             Version 1.0.5			 @Jynx                                                                 
+											             Version 1.0.6			 @Jynx     
 ```
 
 # ## hide.me/console
@@ -26,14 +26,12 @@ Here's how it looks like...
 - **Helping hand:** Integrated help for all actions.
 - **Soft landing:** Doesn't destroy your life in case you do something wrong or stupid, but helps you gracefully instead.
 
-## ## What's new in Version 1.0.5?
+## ## What's new in Version 1.0.6?
 
-Fueled by sleepless nights and way too much coffee, I spared no expense or effort to bring you the following changes:
+Once again, spare no expense or effort to combat my boredom, I’ve added a few more gimmicks to this script that I personally find quite useful and handy:
 
-* **Cool new action to play with:** The `locations` action has been added to the interactive console so you can fetch and view the full list of VPN locations at any time. Curious? Then check out the details in the main guide below.
-* **Location name normalization, AKA grudgingly necessary bugfix:** VPN locations with weird special characters in their names—like "à", "ñ", or God knows what else (thanks a lot, France & Co.!)—are now automatically normalized because the hide.me service can't handle them. In other words: connecting to these locations is only possible if special characters are normalized, i.e. "à" becomes "a", "ñ" becomes "n", and so on. That’s exactly what happens now. Automatically. No voodoo required (anymore).
-* **Removing zombie units, AKA grudgingly necessary bugfix, part 2:** If a connection to a VPN location fails (for instance, because its name wasn't normalized...), hide.me leaves behind a rather weird "zombie unit"" that serves no purpose whatsoever—other than blocking all future VPN connections. Only hide.me knows why that’s even a thing. In any case, the script now tries its absolute best to clean up those zombies.
-* **Pleasing the customer (that's you!):** General error handling and console logging of the script was polished up a bit.
+* **Typing for dummies:** You no longer have to type full VPN location names to connect, and case doesn't matter anymore. For those who prefer a simple example: you can now just enter "lon" instead of "London", "london" instead of "London", or any variation thereof. Boom — just saved you a few more milliseconds of your lifetime. You're welcome.
+* **You are so beautiful:** After consulting with world-leading designers and marketing experts, the script header has been updated to be even cooler than it already was. It was a tough job, but somebody had to do it.
 
 ## ## Prerequisites
 
@@ -160,6 +158,7 @@ The following convenience features are built-in:
 * **Smooth switch:** If there's no active connection to a VPN location yet, the console will establish one. If, on the other hand, a VPN connection already exists, the console will switch from the current location to the newly specified one. This means there is no need for you to disconnect first—you can switch to another location seamlessly and without any hassle.
 * **Index-based connect:** Instead of typing in the full name of a location, you can also just pass the index number of it from the displayed list (see "hide.me VPN locations" above) to `connect`.
 * **Random connect:** If neither a location nor an index number is specified with `connect` (i.e. nothing at all), the console will connect to a location randomly selected from the full available list. If a VPN connection is currently active, `connect` ensures that the same location is not selected again, guaranteeing a completely new one.
+* **Type what you want:** VPN location names don't need to be typed out in full, any part of the name that uniquely identifies a single location is enough. For example: instead of "London", typing "Lon" or "lon" is totally fine. Case sensitivity also doesn't matter, "london" is completely equivalent to "London" or "lOnDoN" (for whatever reason anyone would write it like that...).
 
 **| Disconnecting VPN connections |**
 
@@ -269,6 +268,7 @@ What a brilliant transition: here is my contact info in case you want to get in,
 
 ## ## History
 
+* **1.0.6 (2026-07-30):** Location names no longer need to be case-sensitive, and entering partial names is now supported.
 * **1.0.5 (2026-07-24):** Added action "locations"; added removal of "zombie" units; improved handling of locations with names that contain special characters; improved error handling; user experience and script feedback slightly improved.
 * **1.0.1 (2026-07-09):** Added actions "shuffle", "next", and "dexit"; added help texts.
 * **1.0.0 (2026-07-07):** Initial version.

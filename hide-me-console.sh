@@ -6,6 +6,8 @@
 # jynxified@proton.me
 # 
 # History:
+# 1.0.6 (2026-07-30) - Location names no longer need to be case-sensitive, and entering partial names
+#                      is now supported.
 # 1.0.5 (2026-07-24) - Added action "locations"; added removal of "zombie" units; improved handling
 #                      of locations with names that contain special characters; improved error handling;
 #                      user experience and script feedback slightly improved.
@@ -119,16 +121,24 @@ function connectVpn {
 	    then
 	    	NEW_VPN=${HIDEME_LOC_LIST[$(expr $NEW_VPN - 1)]}
 	    else
-	    	echo -e " ${RED}Invalid location ID '$NEW_VPN', allowed range is [1,${#HIDEME_LOC_LIST[@]}]${NC}"
+	    	echo -e " ${RED}Invalid location ID '$NEW_VPN', allowed range is [1,${#HIDEME_LOC_LIST[@]}].${NC}"
 	    	NEW_VPN=""
 	    fi
 	fi
 
-	if [ "$NEW_VPN" != "" ]
+	if [ "$NEW_VPN" != "" ] # Name of location
 	then
-	    if printf '%s\0' "${HIDEME_LOC_LIST[@]}" | grep -qFxz "$NEW_VPN"
+	    mapfile -d '' MATCHING_LOC_LIST < <(printf '%s\0' "${HIDEME_LOC_LIST[@]}" | grep -zi "$NEW_VPN")
+	    
+	    if [[ ${#MATCHING_LOC_LIST[@]} > 1 ]]
 	    then
+	        echo -e " ${YELLOW}The specified location name '${NEW_VPN}' is ambiguous, it matches ${#MATCHING_LOC_LIST[@]} locations. Please refine your input.${NC}"
+	    elif [[ ${#MATCHING_LOC_LIST[@]} == 1 ]]
+	    then
+
+	        NEW_VPN="${MATCHING_LOC_LIST[0]}"
 	        CURRENT_VPN="$(getCurrentVpn)"
+
 	        if [ "$NEW_VPN" != "$CURRENT_VPN" ]
 	        then
 	    
@@ -138,18 +148,15 @@ function connectVpn {
 	            ERROR_CODE=$?
 	            if [ $ERROR_CODE != 0 ]
 	            then
-	                echo -e " ${RED}Failed to connect to '${BLUE}$NEW_VPN${RED}'${NC} (error code $ERROR_CODE)"
-	                #if [[ "$(systemctl list-units --type=service | fgrep "$HIDEME_SERVICE_NAME" | grep -c "$SERVICE_NAME")" != "0" ]]
-	                #then
-	                    systemctl stop "hide.me@$SERVICE_NAME" # To clean up zombie units
-	                #fi
+	                echo -e " ${RED}Failed to connect to '${BLUE}$NEW_VPN${RED}'${NC} (error code $ERROR_CODE)."
+                    systemctl stop "hide.me@$SERVICE_NAME" # To clean up zombie units
 	            fi
 	            
 	        else
-	            echo -e " ${RED}You are already connected to '${BLUE}$NEW_VPN${RED}'${NC}"
+	            echo -e " ${RED}You are already connected to '${BLUE}$NEW_VPN${RED}'.${NC}"
 	        fi
 	    else
-	        echo -e " ${RED}Unknown location '${BLUE}$NEW_VPN${RED}'${NC}"
+	        echo -e " ${RED}Unknown location '${BLUE}$NEW_VPN${RED}'.${NC}"
 	    fi
 	fi
 }
@@ -225,7 +232,7 @@ function disconnectVpn {
 		systemctl stop "hide.me@$SERVICE_NAME"
 		ERROR_CODE=$?
 		if [ $ERROR_CODE != 0 ]; then
-		    echo -e " ${RED}Failed to disconnect from '${BLUE}$CURRENT_VPN${RED}'${NC} (error code $ERROR_CODE)"
+		    echo -e " ${RED}Failed to disconnect from '${BLUE}$CURRENT_VPN${RED}'${NC} (error code $ERROR_CODE)."
 		fi
 	fi
 }
@@ -245,7 +252,9 @@ function helpForAction {
         echo -e " ${BOLD_MAGENTA}Syntax: c[onnect] [ <location> | <id> ]${NC}"
         echo -e "    This action establishes a connection to a VPN location. It can be used with or without"
         echo -e "    a parameter. If used without a parameter, a random location from the list gets picked."
-        echo -e "    The parameter is either the exact name of the desired location or its ID from the list."
+        echo -e "    The parameter is either the name of the desired location or its ID from the list. Names"
+        echo -e "    don't have to be case-sensitive, entering partial names is supported as long as they"
+        echo -e "    map to a single location."
         
     elif [ "$ACTION_NAME" == "d" ] || [ "$ACTION_NAME" == "disconnect" ]
     then
@@ -302,10 +311,11 @@ function helpForAction {
 ####################################################################################################
 
 echo 
-echo -e "${BOLD_BLUE}-------------------------------------------------------${NC}"
-echo -e "${BOLD_BLUE}----::::       >>   ${MAGENTA}hide${WHITE}.me${BOLD_BLUE}/${YELLOW}console${BOLD_BLUE}   <<       ::::----${NC}"
-echo -e "${BOLD_BLUE}-------------------------------------------------------${NC}"
-echo -e "                                  | 1.0.5 | ${BLUE}by ${YELLOW}@${BLUE}Jynx${NC}"
+echo -e "----------------------------------------------------------------------------------"
+echo -e "                             ${BOLD_BLUE}>>${NC}   ${MAGENTA}hide${WHITE}.me${BOLD_BLUE}/${YELLOW}console${BOLD_BLUE}   <<${NC}"
+echo -e "----------------------------------------------------------------------------------"
+echo -e "    Version 1.0.6 | ${YELLOW}@${BLUE}Jynx${NC} | jynxified@proton.me | ${BLUE}https://github.com/jynxified${NC}"
+echo -e "----------------------------------------------------------------------------------"
 echo
 echo " Current VPN status : $(getVpnStatus)"
 echo
