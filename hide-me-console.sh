@@ -6,6 +6,7 @@
 # jynxified@proton.me
 # 
 # History:
+# 1.0.7 (2026-08-09) - Optimized IP information lookup and display.
 # 1.0.6 (2026-07-30) - Location names no longer need to be case-sensitive, and entering partial names
 #                      is now supported.
 # 1.0.5 (2026-07-24) - Added action "locations"; added removal of "zombie" units; improved handling
@@ -28,7 +29,6 @@ BOLD_BLUE="\e[1;34m"
 BLUE="\e[34m"
 RED="\e[31m"
 GREEN="\e[32m"
-CYAN="\e[36m"
 WHITE="\e[37m"
 BOLD_MAGENTA="\e[1;35m"
 MAGENTA="\e[35m"
@@ -46,19 +46,37 @@ HIDEME_LOC_ELEMENT_ID="ml-1 u-bold"
 # Array of fetched hide.me VPN locations
 HIDEME_LOC_LIST=()
 
+# URL of the service for IP information lookup
+IP_INFO_URL="https://ipinfo.io/what-is-my-ip"
+
 ####################################################################################################
 # Functions
 ####################################################################################################
 
 #
-# Get current WAN IP with region and country
+# Get current WAN IP with city, region, and nation.
 #
-function getWanIpAndRegion {
+function getWanIpInformation {
 
-	WAN_IP=$(curl -s https://api.ipify.org)
-	IP_REGION=$(curl -s ipinfo.io/$WAN_IP/region)
-	IP_COUNTRY=$(curl -s ipinfo.io/$WAN_IP/country)
-	echo -ne "${MAGENTA}$WAN_IP${YELLOW}/$IP_REGION${NC}/$IP_COUNTRY"
+    IP_INFO=$(curl --max-time 10 -L --max-redirs 5 -s $IP_INFO_URL)
+    ERROR_CODE=$?
+    
+    if [[ "$ERROR_CODE" > 0 ]]
+    then
+        echo -ne "${RED}Failed to look up IP information, error code $ERROR_CODE${NC}"
+    fi
+    
+    if [[ "$IP_INFO" == "" || $(echo "$IP_INFO" | fgrep -c "\"error\"") != 0 || $(echo "$IP_INFO" | fgrep -c "Moved Permanently") != 0 ]]
+    then
+        echo -ne "${RED}Failed to look up IP information${NC}"
+    fi
+    
+    WAN_IP=$(echo "$IP_INFO" | fgrep "\"ip\"" | sed -e 's/^.*: "//g' -e 's/".*$//g')
+    IP_CITY=$(echo "$IP_INFO" | fgrep "\"city\"" | sed -e 's/^.*: "//g' -e 's/".*$//g')
+    IP_REGION=$(echo "$IP_INFO" | fgrep "\"region\"" | sed -e 's/^.*: "//g' -e 's/".*$//g')
+	IP_NATION=$(echo "$IP_INFO" | fgrep "\"country\"" | sed -e 's/^.*: "//g' -e 's/".*$//g')
+
+	echo -ne "$WAN_IP${BLUE}/$IP_CITY${YELLOW}/$IP_REGION${MAGENTA}/$IP_NATION${NC}"
 }
 
 #
@@ -78,9 +96,9 @@ function getVpnStatus {
 	CURRENT_VPN=$(getCurrentVpn)
 	if [ "$CURRENT_VPN" != "" ]
 	then
-		echo -en "${GREEN}Connected${NC} to '${BLUE}$CURRENT_VPN${NC}' -> $(getWanIpAndRegion)"
+		echo -en "${GREEN}Connected${NC} to '${BLUE}$CURRENT_VPN${NC}' -> $(getWanIpInformation)"
 	else
-		echo -en "${RED}Not connected${NC} -> $(getWanIpAndRegion)"
+		echo -en "${RED}Not connected${NC} -> $(getWanIpInformation)"
 	fi
 }
 
@@ -314,7 +332,7 @@ echo
 echo -e "----------------------------------------------------------------------------------"
 echo -e "                             ${BOLD_BLUE}>>${NC}   ${MAGENTA}hide${WHITE}.me${BOLD_BLUE}/${YELLOW}console${BOLD_BLUE}   <<${NC}"
 echo -e "----------------------------------------------------------------------------------"
-echo -e "    Version 1.0.6 | ${YELLOW}@${BLUE}Jynx${NC} | jynxified@proton.me | ${BLUE}https://github.com/jynxified${NC}"
+echo -e "    Version 1.0.7 | ${YELLOW}@${BLUE}Jynx${NC} | jynxified@proton.me | ${BLUE}https://github.com/jynxified${NC}"
 echo -e "----------------------------------------------------------------------------------"
 echo
 echo " Current VPN status : $(getVpnStatus)"

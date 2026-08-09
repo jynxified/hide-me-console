@@ -26,12 +26,11 @@ Here's how it looks like...
 - **Helping hand:** Integrated help for all actions.
 - **Soft landing:** Doesn't destroy your life in case you do something wrong or stupid, but helps you gracefully instead.
 
-## ## What's new in Version 1.0.6?
+## ## What's new in Version 1.0.7?
 
-Once again, spare no expense or effort to combat my boredom, I’ve added a few more gimmicks to this script that I personally find quite useful and handy:
+No journey was too far, no effort too great, to bring you even more breathtaking improvements:
 
-* **Typing for dummies:** You no longer have to type full VPN location names to connect, and case doesn't matter anymore. For those who prefer a simple example: you can now just enter "lon" instead of "London", "london" instead of "London", or any variation thereof. Boom — just saved you a few more milliseconds of your lifetime. You're welcome.
-* **You are so beautiful:** After consulting with world-leading designers and marketing experts, the script header has been updated to be even cooler than it already was. It was a tough job, but somebody had to do it.
+* **I finally did it right:** The current WAN IP display got both a performance boost and a visual upgrade. What that actually means? Well, all IP data is now fetched using just a single request instead of four (which was pretty dumb). Plus, a few colors in the display were polished, and the city alongside the region and country was added. I know, I know, absolute madness!
 
 ## ## Prerequisites
 
@@ -108,10 +107,10 @@ The hide.me/console consists of three main areas:
 The VPN status indicates whether a connection to a VPN is currently active. If connected, the status line starts with a green "**Connected**" indicator, confirming your connection is secured. It then displays your public IP (the "WAN IP") along with its corresponding region and country.
 
 ```
-Connected to 'Oslo' -> 79.127.151.244/Oslo/NO
-|_______|     |__|     |____________||___||__|
-    |           |             |        |    |
-   VPN         VPN         WAN IP   Region Country
+Connected to 'London' -> 98.98.199.57/London/England/GB
+|_______|     |____|     |__________||______||______|__|
+    |           |             |          |       |    |
+   VPN         VPN         WAN IP       City  Region Country
 indicator    location         
 ```
 
@@ -122,10 +121,10 @@ Or, to put it simply for people with no affinity for tech jargon: You are free t
 In case no VPN connection is established, the status line starts with a red "**Unconnected**" indicator, confirming your connection is not secured, followed by your real WAN IP, region, and country (i.e. the IP you got from your ISP).
 
 ```
-Not connected -> 12.34.567.890/Paris/FR
-|___________|    |____________||___||__|
-      |                 |        |    |
-     VPN             WAN IP   Region Country
+Not connected -> 149.88.28.35/Paris/Île-de-France/FR
+|___________|    |___________||___||____________||__|
+      |                 |       |         |       |
+     VPN              WAN IP  City     Region   Country
   indicator             
 ```
 
@@ -152,6 +151,8 @@ Examples:
 ```
 connect Amsterdam
 ```
+
+**Important note (seriously, read this!):** The console doesn't support seamless switching between VPN locations. Choosing a new VPN location disconnects the current session before initiating the new one, leaving you briefly exposed without VPN protection. If you're running sensitive tasks that require a 100% continuous VPN connection (unless you want your life ruined), keep this behavior in mind. Consider yourself warned!
 
 The following convenience features are built-in:
 
@@ -268,6 +269,7 @@ What a brilliant transition: here is my contact info in case you want to get in,
 
 ## ## History
 
+* **1.0.7 (2026-08-09):** Optimized IP information lookup and display.
 * **1.0.6 (2026-07-30):** Location names no longer need to be case-sensitive, and entering partial names is now supported.
 * **1.0.5 (2026-07-24):** Added action "locations"; added removal of "zombie" units; improved handling of locations with names that contain special characters; improved error handling; user experience and script feedback slightly improved.
 * **1.0.1 (2026-07-09):** Added actions "shuffle", "next", and "dexit"; added help texts.
