@@ -104,7 +104,7 @@ The hide.me/console consists of three main areas:
 
 ### VPN status
 
-The VPN status indicates whether a connection to a VPN is currently active. If connected, the status line starts with a green "**Connected**" indicator, confirming your connection is secured. It then displays your public IP (the "WAN IP") along with its corresponding region and country.
+The VPN status indicates whether a connection to a VPN is currently active. If connected, the status line starts with a green "**Connected**" indicator, confirming your connection is secured. It then displays your public IP (the "WAN IP") along with its corresponding city, region, and country.
 
 ```
 Connected to 'London' -> 98.98.199.57/London/England/GB
@@ -114,11 +114,11 @@ Connected to 'London' -> 98.98.199.57/London/England/GB
 indicator    location         
 ```
 
-The status bar from this example indicates that a VPN connection to the "Oslo" location is currently active, and that your public IP address on the internet is 79.127.151.244, located in the "Oslo" region (big surprise!), in the country of "Norway" (abbreviated as "NO").
+The status bar from this example indicates that a VPN connection to the "London" location is currently active, and that your public IP address on the internet is 98.98.199.57, located in the city of "London" (big surprise!), in the region of "England", in the country of "Great Britain" (abbreviated as "GB").
 
 Or, to put it simply for people with no affinity for tech jargon: You are free to browse the internet safely and anonymously now. Woohoo!
 
-In case no VPN connection is established, the status line starts with a red "**Unconnected**" indicator, confirming your connection is not secured, followed by your real WAN IP, region, and country (i.e. the IP you got from your ISP).
+In case no VPN connection is established, the status line starts with a red "**Unconnected**" indicator, confirming your connection is not secured, followed by your real WAN IP, city, region, and country (i.e. the IP you got from your ISP).
 
 ```
 Not connected -> 149.88.28.35/Paris/Île-de-France/FR
@@ -156,7 +156,7 @@ connect Amsterdam
 
 The following convenience features are built-in:
 
-* **Smooth switch:** If there's no active connection to a VPN location yet, the console will establish one. If, on the other hand, a VPN connection already exists, the console will switch from the current location to the newly specified one. This means there is no need for you to disconnect first—you can switch to another location seamlessly and without any hassle.
+* **Simplified switch:** If there's no active connection to a VPN location yet, the console will establish one. If, on the other hand, a VPN connection already exists, the console will switch from the current location to the newly specified one. This means there is no need for you to disconnect first—you can switch to another location without any hassle.
 * **Index-based connect:** Instead of typing in the full name of a location, you can also just pass the index number of it from the displayed list (see "hide.me VPN locations" above) to `connect`.
 * **Random connect:** If neither a location nor an index number is specified with `connect` (i.e. nothing at all), the console will connect to a location randomly selected from the full available list. If a VPN connection is currently active, `connect` ensures that the same location is not selected again, guaranteeing a completely new one.
 * **Type what you want:** VPN location names don't need to be typed out in full, any part of the name that uniquely identifies a single location is enough. For example: instead of "London", typing "Lon" or "lon" is totally fine. Case sensitivity also doesn't matter, "london" is completely equivalent to "London" or "lOnDoN" (for whatever reason anyone would write it like that...).
@@ -199,7 +199,7 @@ At the risk of repeating myself: This action can either be written out in full (
 i | info
 ```
 
-The info action displays whether a connection to a VPN location is currently active or not, including the current WAN IP along with its corresponding region and country. Sound familiar? Yep, that’s exactly the same information you get to see in the VPN status area. No special gimmicks or extra features here, just this simple info string.
+The info action displays whether a connection to a VPN location is currently active or not, including the current WAN IP along with its corresponding city, region, and country. Sound familiar? Yep, that’s exactly the same information you get to see in the VPN status area. No special gimmicks or extra features here, just this simple info string.
 
 For anyone who still hasn't grasped the concept by now: This action can either be written out in full ("`info`"), or abbreviated as just "`i`" (yes, I keep copying and pasting this line; I told you, I'm lazy.).
 
