@@ -5,7 +5,12 @@ ____     _     _     _                             __                       _   
   > > > | '_ \| |/ _` |/ _ \ | '_ ` _ \ / _ \   / / __/ _ \| '_ \/ __|/ _ \| |/ _ \ < < <  
  / / /  | | | | | (_| |  __/_| | | | | |  __/  / / (_| (_) | | | \__ \ (_) | |  __/  \ \ \ 
 /_/_/   |_| |_|_|\__,_|\___(_)_| |_| |_|\___| /_/ \___\___/|_| |_|___/\___/|_|\___|   \_\_\
-											             Version 1.0.7			 @Jynx     
+
+                         ::: Version 1.0.7 | @Jynx :::
+
+   Mail_                 GitHub_                        BLOG_
+   jynxified@proton.me | https://github.com/jynxified | https://jynxified.wordpress.com
+
 ```
 
 # ## hide.me/console
