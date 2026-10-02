@@ -6,7 +6,7 @@ ____     _     _     _                             __                       _   
  / / /  | | | | | (_| |  __/_| | | | | |  __/  / / (_| (_) | | | \__ \ (_) | |  __/  \ \ \ 
 /_/_/   |_| |_|_|\__,_|\___(_)_| |_| |_|\___| /_/ \___\___/|_| |_|___/\___/|_|\___|   \_\_\
 
-                         ::: Version 1.0.7 | @Jynx :::
+                         ::: Version 1.1.0 | @Jynx :::
 
    Mail_                 GitHub_                        BLOG_
    jynxified@proton.me | https://github.com/jynxified | https://jynxified.wordpress.com
@@ -31,11 +31,13 @@ Here's how it looks like...
 - **Helping hand:** Integrated help for all actions.
 - **Soft landing:** Doesn't destroy your life in case you do something wrong or stupid, but helps you gracefully instead.
 
-## ## What's new in Version 1.0.7?
+## ## What's new in Version 1.1.0?
 
-No journey was too far, no effort too great, to bring you even more breathtaking improvements:
+No buffet was too big, no couch too comfy, and no pitcher of beer too full to stop me from tackling this release. I’m super hyped to present the latest version of the **hide.me/console**, packed with these absolutely stunning, mind-blowing, one-of-a-kind changes:
 
-* **I finally did it right:** The current WAN IP display got both a performance boost and a visual upgrade. What that actually means? Well, all IP data is now fetched using just a single request instead of four (which was pretty dumb). Plus, a few colors in the display were polished, and the city alongside the region and country was added. I know, I know, absolute madness!
+* **I'm here to stay:** VPN connections can now be set to persistent using the `pconnect` option. This means they’ll survive a full system reboot and reconnect automatically on boot—zero user intervention required. So sit back, relax, and enjoy doing absolute jack squat.
+* **...double-checking is better:** Unsurprisingly, the **hide.me/console** won't get far without a hide.me access token. The script now checks if the token file actually exists on startup. Sounds basic, but it's a lifesaver: hide.me unhelpfully throws a generic connection error when the file is missing, without ever telling you why.
+* **You are so beautiful:** The script's UI just got a kick-ass update and looks sleeker than ever before.
 
 ## ## Prerequisites
 
@@ -81,6 +83,14 @@ Make the script executable:
 chmod +x hide-me-console.sh
 ```
 
+**Pro tip for a stress-free life:** occasionally, a connection to a specific location might fail to establish or to disconnect. To keep the script from endlessly banging its head against the wall trying to reach the unreachable, tune the file `/opt/hide.me/hide.me@.service` by adding the following two lines under the section `[Service]`:
+
+```
+[Service]
+TimeoutStartSec=30
+TimeoutStopSec=30
+```
+
 And ... that's it. Congratulations, you're now a proud owner of the hide.me/console!
 
 ## ## Starting
@@ -103,23 +113,24 @@ alias vpn="<location_of_the_script>/hide-me-console.sh"
 
 ## ## Usage
 
-The hide.me/console consists of three main areas:
-
-![](./assets/hideMeConsole-areas_001.jpg "The hide.me/console")
+The hide.me/console consists of three main areas.
 
 ### VPN status
 
 The VPN status indicates whether a connection to a VPN is currently active. If connected, the status line starts with a green "**Connected**" indicator, confirming your connection is secured. It then displays your public IP (the "WAN IP") along with its corresponding city, region, and country.
 
 ```
-Connected to 'London' -> 98.98.199.57/London/England/GB
-|_______|     |____|     |__________||______||______|__|
-    |           |             |          |       |    |
-   VPN         VPN         WAN IP       City  Region Country
-indicator    location         
+🔒Connected to 'Amsterdam' |persistent| -> 193.118.55.71/Amsterdam/North Holland/NL
+|_|_______|     |_______|   |________|     |____________||________||____________|__|
+ |    |             |            |                |          |            |       |
+ |   VPN           VPN       Connection         WAN IP      City       Region   Country
+ | indicator     location       type
+ |
+Fancy
+icon
 ```
 
-The status bar from this example indicates that a VPN connection to the "London" location is currently active, and that your public IP address on the internet is 98.98.199.57, located in the city of "London" (big surprise!), in the region of "England", in the country of "Great Britain" (abbreviated as "GB").
+The status bar from this example indicates that a persistent VPN connection to the "Amsterdam" location is currently active, and that your public IP address on the internet is 193.118.55.71, located in the city of "Amsterdam" (big surprise!), in the region of "North Holland", in the country of "Netherlands" (abbreviated as "NL").
 
 Or, to put it simply for people with no affinity for tech jargon: You are free to browse the internet safely and anonymously now. Woohoo!
 
@@ -143,13 +154,13 @@ The VPN locations area lists all hide.me VPN locations available for connection.
 
 The interactive VPN console area is (finally) the part where things get interesting and particularly fancy. This is where you can establish hide.me VPN connections, disconnect active ones, or retrieve information about the current connection status by using console-like actions.
 
-**| Establishing VPN connections |**
+**|Establishing transient VPN connections|**
 
 ```
 c | connect [<location>]
 ```
 
-The connect action establishes a connection to a VPN. It can either be written out in full ("`connect`"), or, for lazy folks like myself, abbreviated as just "`c`". Both are equivalent.
+The connect action establishes a transient connection to a VPN, i.e. it won't survive a system reboot. It can either be written out in full ("`connect`"), or, for lazy folks like myself, abbreviated as just "`c`". Both are equivalent.
 
 Examples:
 
@@ -166,7 +177,17 @@ The following convenience features are built-in:
 * **Random connect:** If neither a location nor an index number is specified with `connect` (i.e. nothing at all), the console will connect to a location randomly selected from the full available list. If a VPN connection is currently active, `connect` ensures that the same location is not selected again, guaranteeing a completely new one.
 * **Type what you want:** VPN location names don't need to be typed out in full, any part of the name that uniquely identifies a single location is enough. For example: instead of "London", typing "Lon" or "lon" is totally fine. Case sensitivity also doesn't matter, "london" is completely equivalent to "London" or "lOnDoN" (for whatever reason anyone would write it like that...).
 
-**| Disconnecting VPN connections |**
+**|Establishing permanent VPN connections|**
+
+```
+p | pconnect [<location>]
+```
+
+This option works just like `c|connect`, with one key difference: it sets up persistent VPN connections that survive a reboot. So if your dog trips over the power cord again and your screen suddenly goes pitch black, your VPN connection will be right back up after the restart—pinned to the exact same location as before. Cool, right?
+
+Other than that, it supports all the same bells and whistles as `c|connect`. I’m too lazy to copy-paste it, so just head over to that section and read up.
+
+**|Disconnecting VPN connections|**
 
 ```
 d | disconnect
@@ -176,7 +197,7 @@ The disconnect action terminates a VPN connection if one is currently active. If
 
 That's all it does. Really. No convenience features here.
 
-**| VPN randomization |**
+**|VPN randomization|**
 
 ```
 s | shuffle
@@ -186,9 +207,11 @@ The shuffle action works similarly to the connect action without a specified loc
 
 Why does this action exist if it does the exact same thing as connect, you ask? Because I wanted to have one. Sue me!
 
+By the way: if your previous connection was persistent (see the `p|pconnect` option), the new one will be too. The same goes for transient connections (see `c|connect`). In short, this option preserves your existing connection type.
+
 Once again, this action can either be written out in full ("`shuffle`"), or abbreviated as just "`s`".
 
-**| VPN round-robin |**
+**|VPN round-robin|**
 
 ```
 n | next
@@ -196,9 +219,11 @@ n | next
 
 The next action establishes a connection to the VPN location that comes immediately _after_ the currently active one in the overall list. If no VPN connection exists yet, the action starts with the very first location on the list. If there is currently an active connection to the last location on the list, it jumps back to the beginning of the list. This allows you to perform a "round-robin" rotation of the VPN connections. Neat, huh?
 
+If your previous connection was persistent (see the `p|pconnect` option), the new one will be too. The same goes for transient connections (see `c|connect`). In short, this option preserves your existing connection type.
+
 At the risk of repeating myself: This action can either be written out in full ("`next`"), or abbreviated as just "`n`".
 
-**| VPN status information |**
+**|VPN status information|**
 
 ```
 i | info
@@ -208,7 +233,7 @@ The info action displays whether a connection to a VPN location is currently act
 
 For anyone who still hasn't grasped the concept by now: This action can either be written out in full ("`info`"), or abbreviated as just "`i`" (yes, I keep copying and pasting this line; I told you, I'm lazy.).
 
-**| List VPN locations |**
+**|List VPN locations|**
 
 ```
 l | locations 
@@ -218,7 +243,7 @@ This action does the exact same thing that happens when the script starts—the 
 
 Surprise, surprise: This action can either be written out in full ("`locations`"), or abbreviated as just "`l`".
 
-**| Help on actions |**
+**|Help on actions|**
 
 ```
 h | help <action> 
@@ -228,7 +253,7 @@ The help action displays a short, concise, hopefully useful help text for the ac
 
 This action can either be written out in full... hell, I'm getting bored of this. Type "`help`" or "`h`" followed by an action's name and see what happens.
 
-**| Exiting the hide.me/console |**
+**|Exiting the hide.me/console|**
 
 ```
 e | exit 
@@ -238,7 +263,7 @@ The exit action closes the console. That’s it. Boom – gone! However, there i
 
 "`exit`" or "`e`" will both do the trick.
 
-**| Exiting the hide.me/console even better |**
+**|Exiting the hide.me/console even better|**
 
 ```
 x | dexit 
@@ -252,7 +277,7 @@ By the way, in case you haven't figured it out yourself: the "d" in "dexit" stan
 
 ## ## Disclaimer
 
-The hide.me/console is provided "as is" without any warranty of any kind, either expressed or implied. Use it entirely at your own risk. The author (that's me) shall not be liable for any damages, data loss, system failures, or serious trouble you, your relatives, their neighbours or beloved pets might get into caused by the use or misuse of it.
+The hide.me/console is provided "as is" without any warranty of any kind, either expressed or implied. Use it entirely at your own risk. The author (that's me) shall not be liable for any damages, data loss, system failures, or serious trouble you, your relatives, their neighbors or beloved pets might get into caused by the use or misuse of it.
 
 ## ## License
 
@@ -278,6 +303,7 @@ Also, check out my BLOG for news about Cybersecurity, Security Vulnerabilities, 
 
 ## ## History
 
+* **1.1.0 (2026-09.30):** Added action "pconnect" and handling of persistent connections; added hide.me access token check; improved output.
 * **1.0.7 (2026-08-09):** Optimized IP information lookup and display.
 * **1.0.6 (2026-07-30):** Location names no longer need to be case-sensitive, and entering partial names is now supported.
 * **1.0.5 (2026-07-24):** Added action "locations"; added removal of "zombie" units; improved handling of locations with names that contain special characters; improved error handling; user experience and script feedback slightly improved.

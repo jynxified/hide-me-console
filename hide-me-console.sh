@@ -6,6 +6,8 @@
 # jynxified@proton.me
 # 
 # History:
+# 1.1.0 (2026-09-30) - Added action "pconnect" and handling of persistent connections; added hide.me
+#                      access token check; improved output.
 # 1.0.7 (2026-08-09) - Optimized IP information lookup and display.
 # 1.0.6 (2026-07-30) - Location names no longer need to be case-sensitive, and entering partial names
 #                      is now supported.
@@ -18,13 +20,14 @@
 # Disclaimer:
 # This script is provided "as is" without any warranty of any kind, either expressed or implied.
 # Use it entirely at your own risk. The author (that's me) shall not be liable for any damages,
-# data loss, system failures, or serious trouble you, your relatives, their neighbours or beloved
+# data loss, system failures, or serious trouble you, your relatives, their neighbors or beloved
 # pets might get into caused by the use or misuse of this script.
 #
 # Licensed under "CC BY-NC-ND 4.0" (https://creativecommons.org/licenses/by-nc-nd/4.0/).
 ####################################################################################################
 
-# Text colors
+# Text colors & styles
+BOLD="\e[1m"
 BOLD_BLUE="\e[1;34m"
 BLUE="\e[34m"
 RED="\e[31m"
@@ -35,6 +38,12 @@ MAGENTA="\e[35m"
 YELLOW="\e[33m"
 BLINK="\e[5m"
 NC="\e[0m"
+
+# Icons
+ICON_MAIL="\U0001F4E7"
+ICON_GITHUB="\u2699\uFE0F"
+ICON_BLOG="\U0001F310"
+ICON_LOCK_CLOSED="\U1F512"
 
 # Name of the local hide.me service
 HIDEME_SERVICE_NAME="hide.me"
@@ -49,9 +58,25 @@ HIDEME_LOC_LIST=()
 # URL of the service for IP information lookup
 IP_INFO_URL="https://ipinfo.io/what-is-my-ip"
 
+# Path of hide.me access token file
+ACCESS_TOKEN_FILE="/opt/hide.me/accessToken.txt"
+
 ####################################################################################################
 # Functions
 ####################################################################################################
+
+function checkAccessToken {
+    
+    if [[ (! -e "$ACCESS_TOKEN_FILE") || (-d "$ACCESS_TOKEN_FILE") ]]
+    then
+        echo -e "${RED}hide.me access token file is missing or is not a file: $ACCESS_TOKEN_FILE${NC}"
+        echo
+        echo -e "${RED}This file is mandatory, you cannot use the hide.me/console without it. Therefore, please make${NC}"
+        echo -e "${RED}sure that the path is valid, and if so, recreate the token file. Refer to the README file on${NC}"
+        echo -e "${RED}how to do that.${NC}"
+        exit 1
+    fi
+}
 
 #
 # Get current WAN IP with city, region, and nation.
@@ -96,10 +121,32 @@ function getVpnStatus {
 	CURRENT_VPN=$(getCurrentVpn)
 	if [ "$CURRENT_VPN" != "" ]
 	then
-		echo -en "${GREEN}Connected${NC} to '${BLUE}$CURRENT_VPN${NC}' -> $(getWanIpInformation)"
+	
+	    CONNECT_TYPE="${YELLOW}transient${NC}"
+	    if [ "$(isCurrentVpnPersistent)" != "0" ]
+	    then
+	        CONNECT_TYPE="${GREEN}persistent${NC}"
+	    fi
+	
+		echo -en "${ICON_LOCK_CLOSED}${GREEN}Connected${NC} to '${BLUE}$CURRENT_VPN${NC}' |$CONNECT_TYPE| -> $(getWanIpInformation)"
 	else
 		echo -en "${RED}Not connected${NC} -> $(getWanIpInformation)"
 	fi
+}
+
+#
+# Checks whether the current VPN connection is persistent or not
+#
+function isCurrentVpnPersistent {
+    
+    CURRENT_VPN=$(getCurrentVpn)
+    if [ "$CURRENT_VPN" != "" ]
+    then
+        SERVICE_NAME=$(systemd-escape "$CURRENT_VPN")
+        echo -n "$(systemctl is-enabled hide.me@$SERVICE_NAME | fgrep -c 'enabled')"
+    else
+        echo -n "0"
+    fi
 }
 
 #
@@ -129,10 +176,13 @@ function getVpnList {
 #
 # Input parameters:
 #  - [1] : Name or ID of the hide.me location to connect to
+#  - [2] : Connection type. 1=transient, 2=persistent.
 #
 function connectVpn {
 
 	NEW_VPN=$1
+	CONNECT_TYPE=$2
+	
 	if [[ "$NEW_VPN" =~ ^[0-9]+$ ]] # ID of location
 	then
 	    if [[ "$NEW_VPN" -ge 1 && "$NEW_VPN" -le ${#HIDEME_LOC_LIST[@]} ]]
@@ -161,13 +211,20 @@ function connectVpn {
 	        then
 	    
 	        	disconnectVpn
+
 	        	SERVICE_NAME=$(systemd-escape "$NEW_VPN")
+	        	
 	            systemctl start "hide.me@$SERVICE_NAME"
 	            ERROR_CODE=$?
 	            if [ $ERROR_CODE != 0 ]
 	            then
 	                echo -e " ${RED}Failed to connect to '${BLUE}$NEW_VPN${RED}'${NC} (error code $ERROR_CODE)."
                     systemctl stop "hide.me@$SERVICE_NAME" # To clean up zombie units
+	            else
+	                if [ "$CONNECT_TYPE" == "2" ] # Create persistent connection
+	                then
+	                    systemctl enable "hide.me@$SERVICE_NAME" 2>/dev/null
+	                fi
 	            fi
 	            
 	        else
@@ -243,7 +300,10 @@ function nextVpnLocationId {
 # Disconnect the current VPN (if any)
 #
 function disconnectVpn {
-	CURRENT_VPN="$(getCurrentVpn)";
+
+	CURRENT_VPN="$(getCurrentVpn)"
+	IS_CURRENT_VPN_PERSISTENT="$(isCurrentVpnPersistent)"
+	
 	if [ "$CURRENT_VPN" != "" ]
 	then
 	    SERVICE_NAME=$(systemd-escape "$CURRENT_VPN")
@@ -251,6 +311,11 @@ function disconnectVpn {
 		ERROR_CODE=$?
 		if [ $ERROR_CODE != 0 ]; then
 		    echo -e " ${RED}Failed to disconnect from '${BLUE}$CURRENT_VPN${RED}'${NC} (error code $ERROR_CODE)."
+		fi
+		
+		if [ "$IS_CURRENT_VPN_PERSISTENT" != "0" ]
+		then
+		    systemctl disable "hide.me@$SERVICE_NAME" 2>/dev/null
 		fi
 	fi
 }
@@ -268,54 +333,76 @@ function helpForAction {
     if [ "$ACTION_NAME" == "c" ] || [ "$ACTION_NAME" == "connect" ]
     then
         echo -e " ${BOLD_MAGENTA}Syntax: c[onnect] [ <location> | <id> ]${NC}"
-        echo -e "    This action establishes a connection to a VPN location. It can be used with or without"
-        echo -e "    a parameter. If used without a parameter, a random location from the list gets picked."
-        echo -e "    The parameter is either the name of the desired location or its ID from the list. Names"
-        echo -e "    don't have to be case-sensitive, entering partial names is supported as long as they"
-        echo -e "    map to a single location."
+        echo -e "    This action establishes a transient connection to a VPN location. It can be used with"
+        echo -e "    or without a parameter. If used without a parameter, a random location from the list"
+        echo -e "    gets picked. The parameter is either the name of the desired location or its ID from"
+        echo -e "    the list. Names don't have to be case-sensitive, entering partial names is supported"
+        echo -e "    as long as they map to a single location."
+        echo -e "    Please note: this connection won't survive a reboot! If you need it to stick around"
+        echo -e "    persistently, use ${BOLD}p|pconnect${NC} instead."
         
+    elif [ "$ACTION_NAME" == "p" ] || [ "$ACTION_NAME" == "pconnect" ]
+    then
+        echo -e " ${BOLD_MAGENTA}Syntax: p[connect] [ <location> | <id> ]${NC}"
+        echo -e "    This action establishes a persistent connection to a VPN location, i.e. it survives"
+        echo -e "    system reboots and auto-reconnects until it is explicitly disconnected. That's the main"
+        echo -e "    difference to ${BOLD}c|connect${NC}. It can be used with or without a parameter. If used without a"
+        echo -e "    parameter, a random location from the list gets picked. The parameter is either the name"
+        echo -e "    of the desired location or its ID from the list. Names don't have to be case-sensitive,"
+        echo -e "    entering partial names is supported as long as they map to a single location."
+
     elif [ "$ACTION_NAME" == "d" ] || [ "$ACTION_NAME" == "disconnect" ]
     then
         echo -e " ${BOLD_MAGENTA}Syntax: d[isconnect]${NC}"
         echo -e "    This action disconnects from the current VPN location. If no connection is established"
         echo -e "    yet, the action does nothing at all."
+        
     elif [ "$ACTION_NAME" == "s" ] || [ "$ACTION_NAME" == "shuffle" ]
     then
         echo -e " ${BOLD_MAGENTA}Syntax: s[huffle]${NC}"
         echo -e "    This action picks a random VPN location and establishes a connection to it. If there's"
         echo -e "    already an established connection to a location, it gets switched to the newly picked"
-        echo -e "    location. The action ensures that not the same location gets picked and connected to again."
+        echo -e "    location. The action ensures that not the same location gets picked and connected to"
+        echo -e "    again. If the previous connection was persistent, the newly selected one will be as well."
+        
     elif [ "$ACTION_NAME" == "n" ] || [ "$ACTION_NAME" == "next" ]
     then
         echo -e " ${BOLD_MAGENTA}Syntax: n[ext]${NC}"
         echo -e "    This action picks the location that follows the current one from the list and establishes"
         echo -e "    a connection to it. If no connection is established yet, the first location from the list"
         echo -e "    gets picked and connected to. If the last location from the list was reached, the first one"
-        echo -e "    gets picked (round robin)."
+        echo -e "    gets picked (round robin). If the previous connection was persistent, the newly selected"
+        echo -e "    one will be as well."
+        
     elif [ "$ACTION_NAME" == "i" ] || [ "$ACTION_NAME" == "info" ]
     then
         echo -e " ${BOLD_MAGENTA}Syntax: i[nfo]${NC}"
         echo -e "    This action prints the VPN connection status, i.e. if a connection is currently established,"
         echo -e "    and how the WAN IP currently looks like."
+        
     elif [ "$ACTION_NAME" == "l" ] || [ "$ACTION_NAME" == "locations" ]
     then
         echo -e " ${BOLD_MAGENTA}Syntax: l[ocations]${NC}"
         echo -e "    This action refreshes the list of available VPN locations and displays it."
+        
     elif [ "$ACTION_NAME" == "h" ] || [ "$ACTION_NAME" == "help" ]
     then
         echo -e " ${BOLD_MAGENTA}Syntax: h[elp] <action>${NC}"
         echo -e "    This action prints a help text on, well, an action (obviously). Try one of the other actions"
         echo -e "    together with help. Makes more sense."
+        
     elif [ "$ACTION_NAME" == "e" ] || [ "$ACTION_NAME" == "exit" ]
     then
         echo -e " ${BOLD_MAGENTA}Syntax: e[xit]${NC}"
         echo -e "    This action exits the hide.me VPN console. If any VPN connection is current established, it"
         echo -e "    remains in that state and does not get disconnected. To manage it, just start the console again."
+        
     elif [ "$ACTION_NAME" == "x" ] || [ "$ACTION_NAME" == "dexit" ]
     then
         echo -e " ${BOLD_MAGENTA}Syntax: d[exit]${NC}"
         echo -e "    This action disconnects any currently established VPN connections and exits the hide.me VPN"
         echo -e "    console afterwards."
+        
     elif [ "$ACTION_NAME" == "" ]
     then
         echo -e " ${RED}No action specified, please use 'help' with the name of an action you want to get help for.${NC}"
@@ -332,9 +419,23 @@ echo
 echo -e "----------------------------------------------------------------------------------"
 echo -e "                             ${BOLD_BLUE}>>${NC}   ${MAGENTA}hide${WHITE}.me${BOLD_BLUE}/${YELLOW}console${BOLD_BLUE}   <<${NC}"
 echo -e "----------------------------------------------------------------------------------"
-echo -e "    Version 1.0.7 | ${YELLOW}@${BLUE}Jynx${NC} | jynxified@proton.me | ${BLUE}https://github.com/jynxified${NC}"
+echo -e "                                   ${BOLD}Version 1.1.0${NC}"
+echo -e "----------------------------------------------------------------------------------"
+echo -e "    ${ICON_MAIL}jynxified@proton.me | ${ICON_GITHUB} ${BLUE}github.com/jynxified${NC} | ${ICON_BLOG}${BLUE}jynxified.wordpress.com${NC}"
 echo -e "----------------------------------------------------------------------------------"
 echo
+
+if [[ "$1" != "" ]]
+then
+    echo -e "${YELLOW}Buddy, you don't need any arguments for this program. Also, it doesn't have any you${NC}"
+    echo -e "${YELLOW}could use. It's an interactive console. Just run it as is and see what happens \U1F609.${NC}"
+    echo
+    echo -e "${YELLOW}See the README if you need more information. That's what it's for.${NC}"
+    exit
+fi
+
+checkAccessToken
+
 echo " Current VPN status : $(getVpnStatus)"
 echo
 
@@ -347,7 +448,8 @@ echo
 echo " Available actions:"
 echo
 
-echo -e "   ${YELLOW} c | connect [<location>]${NC}\tConnect to VPN location"
+echo -e "   ${YELLOW} c | connect [<location>]${NC}\tConnect transiently to VPN location"
+echo -e "   ${YELLOW} p | pconnect [<location>]${NC}\tConnect persistently to VPN location"
 echo -e "   ${YELLOW} d | disconnect${NC}\t\tDisconnect current VPN location"
 echo -e "   ${YELLOW} s | shuffle${NC}\t\t\tConnect to a random VPN location"
 echo -e "   ${YELLOW} n | next${NC}\t\t\tConnect to VPN location following the current one"
@@ -370,8 +472,21 @@ do
 		    NEW_VPN=$(shuffleVpnLocation)
 		fi
 		
-		printf "\r ${YELLOW}${BLINK}Connecting...${NC}\r"
-		connectVpn $NEW_VPN
+		printf "\r ${YELLOW}${BLINK}Connecting transiently...${NC}\r"
+		connectVpn $NEW_VPN "1"
+		echo -e " $(getVpnStatus)"
+
+	elif [[ "$HIDEME_ACTION" =~ ^pconnect' ' ]] || [[ "$HIDEME_ACTION" =~ ^p' ' ]] || [ "$HIDEME_ACTION" == "pconnect" ] || [ "$HIDEME_ACTION" == "p" ]  # Action: pconnect
+	then
+		
+		NEW_VPN=$(echo $HIDEME_ACTION | sed -E 's/^p(connect)?[ ]?//g')
+		if [ "$NEW_VPN" == "" ]
+		then
+		    NEW_VPN=$(shuffleVpnLocation)
+		fi
+		
+		printf "\r ${YELLOW}${BLINK}Connecting persistently...${NC}\r"
+		connectVpn $NEW_VPN "2"
 		echo -e " $(getVpnStatus)"
 		
 	elif [ "$HIDEME_ACTION" == "disconnect" ] || [ "$HIDEME_ACTION" == "d" ] # Action: disconnect
@@ -380,7 +495,7 @@ do
 		CURRENT_VPN="$(getCurrentVpn)"
 		if [ "$CURRENT_VPN" != "" ]
 		then
-			printf "\r ${YELLOW}${BLINK}Disconnecting...${NC}\r"
+			printf "\r ${YELLOW}${BLINK}Disconnecting from '${BLUE}$CURRENT_VPN${YELLOW}'...${NC}\r"
 			disconnectVpn
 			echo -e " $(getVpnStatus)"
 
@@ -394,8 +509,16 @@ do
 	    NEW_VPN=$(shuffleVpnLocation)
 	    if [ "$NEW_VPN" != "" ]
 	    then
-	        printf "\r ${YELLOW}${BLINK}Connecting...${NC}\r"
-		    connectVpn $NEW_VPN
+	        CONNECT_MODE="1"
+    	    CONNECT_MODE_TEXT="transiently"
+	        if [ "$(isCurrentVpnPersistent)" != "0" ]
+	        then
+	            CONNECT_MODE="2"
+                CONNECT_MODE_TEXT="persistently"
+	        fi
+	        
+	        printf "\r ${YELLOW}${BLINK}Connecting $CONNECT_MODE_TEXT...${NC}\r"
+		    connectVpn $NEW_VPN $CONNECT_MODE
 	    else
 	        echo -e " ${RED}Failed to shuffle a unique VPN location, try again or use a manual disconnect|connect.${NC}"
 	    fi
@@ -405,9 +528,19 @@ do
 	elif [ "$HIDEME_ACTION" == "next" ] || [ "$HIDEME_ACTION" == "n" ] # Action: next
 	then
 	
+	    CONNECT_MODE="1"
+	    CONNECT_MODE_TEXT="transiently"
+        if [ "$(isCurrentVpnPersistent)" != "0" ]
+        then
+            CONNECT_MODE="2"
+            CONNECT_MODE_TEXT="persistently"
+        fi
+	
 	    NEW_VPN=$(nextVpnLocationId)
-        printf "\r ${YELLOW}${BLINK}Connecting...${NC}\r"
-	    connectVpn $NEW_VPN
+        
+        printf "\r ${YELLOW}${BLINK}Connecting $CONNECT_MODE_TEXT...${NC}\r"
+        
+	    connectVpn $NEW_VPN $CONNECT_MODE
 	    echo -e " $(getVpnStatus)"
 	
 	elif [ "$HIDEME_ACTION" == "info" ] || [ "$HIDEME_ACTION" == "i" ] # Action: info
@@ -433,7 +566,7 @@ do
 		CURRENT_VPN="$(getCurrentVpn)"
 		if [ "$CURRENT_VPN" != "" ]
 		then
-			printf "\r ${YELLOW}${BLINK}Disconnecting...${NC}\r"
+			printf "\r ${YELLOW}${BLINK}Disconnecting from '${BLUE}$CURRENT_VPN${YELLOW}'...${NC}\r"
 			disconnectVpn
 		fi
 		
