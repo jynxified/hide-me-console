@@ -362,6 +362,8 @@ If you run the system tray script installation again while the Connection Status
 
 The **hide.me/console** and all its components are provided "as is" without any warranty of any kind, either expressed or implied. Use it entirely at your own risk. The author (that's me) shall not be liable for any damages, data loss, system failures, or serious trouble you, your relatives, their neighbors or beloved pets might get into caused by the use or misuse of them.
 
+By the way: None of this was created by hide.me, nor does it have any commercial affiliation with hide.me. This whole thing is entirely my own creation, a private passion project built just for the fun of it. So no, I’m not getting paid for this. I don’t get certificates of commendation. And there’s definitely no fancy hide.me company car in my garage.
+
 ## ## License
 
 This project is licensed under **[CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/)** (Attribution-NonCommercial-NoDerivatives). 
