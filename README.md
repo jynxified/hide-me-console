@@ -86,10 +86,12 @@ You can carry out the installation either automatically via the installer script
 
 ### Automated installation
 
-To perform the automated installation, simply copy the following Bash line and run it in your terminal:
+To perform the automated installation, simply copy the following Bash lines and run them in your terminal:
 
 ```bash
-curl -fsS https://github.com/jynxified/hide-me-console/blob/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/jynxified/hide-me-console/main/install.sh -o /tmp/install.sh
+chmod +x /tmp/install.sh
+/tmp/install.sh
 ```
 
 ### Manual installation
