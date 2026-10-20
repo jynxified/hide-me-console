@@ -6,9 +6,9 @@ ____     _     _     _                             __                       _   
  / / /  | | | | | (_| |  __/_| | | | | |  __/  / / (_| (_) | | | \__ \ (_) | |  __/  \ \ \ 
 /_/_/   |_| |_|_|\__,_|\___(_)_| |_| |_|\___| /_/ \___\___/|_| |_|___/\___/|_|\___|   \_\_\
 
-                         ::: Version 1.1.0 | @Jynx :::
+                         ::: Version 1.2.0 | @Jynx :::
 
-   Mail_                 GitHub_                        BLOG_
+   _ Mail ____________  _ GitHub ____________________   _ BLOG ________________________
    jynxified@proton.me | https://github.com/jynxified | https://jynxified.wordpress.com
 
 ```
@@ -18,26 +18,36 @@ ____     _     _     _                             __                       _   
 
 Implemented as a Bash script, it allows you to easily connect to and disconnect from VPN locations, get status overviews, and more. Available locations are fetched online from the official [hide.me website](https://hide.me/en/network), eliminating the need to store them in a local file.
 
-Here's how it looks like...
+Here's how it looks like:
 
 ![](./assets/hideMeConsole-screenshot-001.jpg "The hide.me/console")
+
+In addition, the **hide.me/console** now also offers a system tray icon that displays the status of your VPN connection. For instance, if a connection to a VPN location is active, a green padlock icon is shown. Hovering your mouse over it displays your current WAN IP.
+
+![](./assets/tray-icon-connected.jpg "The tray icon")
+
+If there’s no active connection, the padlock turns red instead, displaying your actual ISP-assigned WAN IP.
+
+![](./assets/tray-icon-disconnected.jpg "The tray icon 2")
 
 ## ## Features
 
 - **Piece of cake:** Easy and intuitive to use (really).
-- **I love to serve:** Automatically fetches available VPN locations online.
+- **I love to serve:** Automatically fetches available VPN locations online. No need to manually place them in any file.   
 - **Catch me if you can:** Allows random selection of and switching between VPN locations ("shuffling").
 - **Silence isn't golden:** Detailed status message on current VPN connection status, including WAN IP, region, and country information.
+- **A quick glance:** Custom system tray icon displaying the VPN connection status. In full color and everything.
+- **Lazy people welcome:** Installer script that copies and sets up all the many little fancy things required to run the **hide.me/console**.
 - **Helping hand:** Integrated help for all actions.
 - **Soft landing:** Doesn't destroy your life in case you do something wrong or stupid, but helps you gracefully instead.
 
-## ## What's new in Version 1.1.0?
+## ## What's new in Version 1.2.0?
 
-No buffet was too big, no couch too comfy, and no pitcher of beer too full to stop me from tackling this release. I’m super hyped to present the latest version of the **hide.me/console**, packed with these absolutely stunning, mind-blowing, one-of-a-kind changes:
+Hold onto your pants, folks, because here comes the most mind-blowing dose of shiny new features and bug fixes ever:
 
-* **I'm here to stay:** VPN connections can now be set to persistent using the `pconnect` option. This means they’ll survive a full system reboot and reconnect automatically on boot—zero user intervention required. So sit back, relax, and enjoy doing absolute jack squat.
-* **...double-checking is better:** Unsurprisingly, the **hide.me/console** won't get far without a hide.me access token. The script now checks if the token file actually exists on startup. Sounds basic, but it's a lifesaver: hide.me unhelpfully throws a generic connection error when the file is missing, without ever telling you why.
-* **You are so beautiful:** The script's UI just got a kick-ass update and looks sleeker than ever before.
+* **Just like that:** The folks over at hide.me recently went ahead and changed the webpage hosting their VPN locations, which broke the hide.me/console’s ability to fetch them automatically. Those cheeky little rascals! Well, this issue has been updated in the current version, so locations are being retrieved properly once again.
+* **Color, at last:** The status of your current VPN connection is displayed via a system tray icon. This way, you can check whether you're connected or not at any time without having to launch the **hide.me/console**.
+* **Doesn’t get any easier than this:** The **hide.me/console**, the system tray icon, and all required add-ons can now be installed via a handy installer script. Just run it and be happy.
 
 ## ## Prerequisites
 
@@ -72,15 +82,46 @@ If you still run into any trouble, especially concerning the hide.me VPN for Lin
 
 ## ## Installation
 
-Clone the repository and navigate into the project directory:
+You can carry out the installation either automatically via the installer script or, if you happen to be one of those tech-obsessed masochists, manually. As you wish.
+
+### Automated installation
+
+To perform the automated installation, simply copy the following Bash line and run it in your terminal:
+
+```bash
+curl -fsS https://github.com/jynxified/hide-me-console/blob/main/install.sh | bash
+```
+
+### Manual installation
+
+So I went through all the trouble of writing a super cool installer script, and you still want to do it yourself? Well, fine, knock yourself out.
+
+First, clone the Git repository and navigate into the project directory:
 
 ```bash
 git clone https://github.com/jynxified/hide-me-console.git
 cd hide-me-console
 ```
-Make the script executable:
+
+Alternatively, you can download and extract the complete archive:
+
 ```bash
-chmod +x hide-me-console.sh
+wget -O /tmp/install.zip https://github.com/jynxified/hide-me-console/archive/refs/heads/main.zip
+unzip -o /tmp/install.zip -d /tmp/hide-me-install
+cd /tmp/hide-me-install/hide-me-console-main
+```
+
+Copy the file `hide-me-console.sh` into a directory of your choice. For example, `~/.local/bin/` is highly recommended because according to the Freedesktop standard, this directory is included in your `$PATH`, meaning the script can easily be executed from there. However, you can also run it straight from the checked-out Git repository. Makes zero difference in the end.
+
+```bash
+mkdir ~/.local/bin/hide-me-console
+cp ./hide-me-console.sh ~/.local/bin/hide-me-console/
+```
+
+Make the script executable:
+
+```bash
+chmod +x ~/local/bin/hide-me-console.sh
 ```
 
 **Pro tip for a stress-free life:** occasionally, a connection to a specific location might fail to establish or to disconnect. To keep the script from endlessly banging its head against the wall trying to reach the unreachable, tune the file `/opt/hide.me/hide.me@.service` by adding the following two lines under the section `[Service]`:
@@ -91,7 +132,43 @@ TimeoutStartSec=30
 TimeoutStopSec=30
 ```
 
-And ... that's it. Congratulations, you're now a proud owner of the hide.me/console!
+That’s strike one! The **hide.me/console** is fully installed as of right now.
+
+Up next: the **VPN Connection Status Indicator**. This, by the way, is an optional feature that you don’t have to install if you don’t want to. But let’s be honest: it’s free and it’s cool! So go ahead—help yourself!
+
+The status indicator is implemented via a separate script, so it needs to be installed separately as well. To do this, copy the file `hide-me-status-indicator.sh` into the same directory where you put `hide-me-console.sh` earlier.
+
+```bash
+cp ./hide-me-status-indicator.sh ~/.local/bin/hide-me-console/
+```
+
+Make the script executable too:
+
+```bash
+chmod +x ~/.local/bin/hide-me-status-indicator.sh
+```
+
+In theory, this script can be launched from a console just like any other. However, to integrate it so that it runs automatically on every system boot or login (which I highly recommend as it makes the most sense), an additional file at `~/.config/autostart` needs to be created.
+
+```bash
+(
+   echo "[Desktop Entry]"
+   echo "Type=Application"
+   echo "Name=Hide.me VPN Status Indicator"
+   echo "Exec=~/.local/bin/hide-me-status-indicator.sh"
+   echo "Hidden=false"
+   echo "NoDisplay=false"
+   echo "X-GNOME-Autostart-enabled=true" 
+) > ~/.config/autostart/hide-me-status-indicator.desktop
+```
+
+The script relies on the tool `yad`. If it isn’t already installed on your system, you’ll need to install it accordingly:
+
+```bash
+sudo apt install yad -y
+```
+
+And... that's it. Congratulations, you're now a proud owner of the **hide.me/console** in all its glory!
 
 ## ## Starting
 
@@ -108,7 +185,7 @@ The script does not take any launch arguments; it doesn't need to. Everything re
 Create an alias for the script in your `.bashrc` or `.zshrc` file—or whatever shell and Linux distribution you're a fan of and are using and however the corresponding rc file is named there. Such an alias makes your VPN-based life much easier and convenient.
 
 ```bash
-alias vpn="<location_of_the_script>/hide-me-console.sh"
+alias vpn="~/.local/bin/hide-me-console.sh"
 ```
 
 ## ## Usage
@@ -274,6 +351,10 @@ The dexit action is the bigger and cooler brother of the exit action, as it disc
 By the way, in case you haven't figured it out yourself: the "d" in "dexit" stands for "disconnect". Makes sense, doesn't it?
 
 "`dexit`" or "`x`" will both do the trick here. Wait ... what? Why "x", you ask? Why not "d"? Because "d" is already taken!
+
+## ## Known issues
+
+If you run the system tray script installation again while the Connection Status Indicator script is running, you might occasionally end up with two system tray icons. The same goes for launching the script manually while an instance is already running. The detection and termination routine for running instances isn't quite perfected yet, this will definitely be improved in the next release. During normal system boots, however, there are no known issues of this kind that I'm aware of.
 
 ## ## Disclaimer
 

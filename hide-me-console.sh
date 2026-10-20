@@ -1,11 +1,16 @@
 #!/bin/bash
 ####################################################################################################
-# Interactive management console for hide.me VPN for Linux CLI
+# Interactive Management Console for hide.me VPN for Linux CLI
 # Written by @Jynx
+# 
 # https://github.com/jynxified
+# https://jynxified.wordpress.com
 # jynxified@proton.me
 # 
 # History:
+# 1.2.0 (2026-10-20) - Added system tray status indicator (as separate script); added installer;
+#                      fetching VPN locations updated to match the new hide.me page design; added
+#                      error handling in case the list of available locations cannot be retrieved.   
 # 1.1.0 (2026-09-30) - Added action "pconnect" and handling of persistent connections; added hide.me
 #                      access token check; improved output.
 # 1.0.7 (2026-08-09) - Optimized IP information lookup and display.
@@ -50,8 +55,6 @@ HIDEME_SERVICE_NAME="hide.me"
 
 # URL of the website where the hide.me VPN locations are listed
 HIDEME_LOC_LIST_URL="https://hide.me/en/network"
-# Element ID within the hide.me website containing VPN location information
-HIDEME_LOC_ELEMENT_ID="ml-1 u-bold"
 # Array of fetched hide.me VPN locations
 HIDEME_LOC_LIST=()
 
@@ -65,11 +68,15 @@ ACCESS_TOKEN_FILE="/opt/hide.me/accessToken.txt"
 # Functions
 ####################################################################################################
 
+#
+# Check whether the hide.me access token is present. If it doesn’t exist, the program terminates.
+# No token, no fun.   
+#
 function checkAccessToken {
     
     if [[ (! -e "$ACCESS_TOKEN_FILE") || (-d "$ACCESS_TOKEN_FILE") ]]
     then
-        echo -e "${RED}hide.me access token file is missing or is not a file: $ACCESS_TOKEN_FILE${NC}"
+        echo -e "${RED}hide.me access token file is either missing or not a file: $ACCESS_TOKEN_FILE${NC}"
         echo
         echo -e "${RED}This file is mandatory, you cannot use the hide.me/console without it. Therefore, please make${NC}"
         echo -e "${RED}sure that the path is valid, and if so, recreate the token file. Refer to the README file on${NC}"
@@ -135,7 +142,11 @@ function getVpnStatus {
 }
 
 #
-# Checks whether the current VPN connection is persistent or not
+# Checks whether the current VPN connection is persistent or not.
+#
+# Return values:
+#  - 0 : Current connection is transient.
+#  - 1 : Current connection is persistent.
 #
 function isCurrentVpnPersistent {
     
@@ -160,13 +171,23 @@ function getVpnList {
 	IFS_BACKUP=$IFS
 	IFS=$'\n'
 	LOC_CNTR=1
-	HIDEME_LOC_CLEANUP_PATTERN="s/^.*$HIDEME_LOC_ELEMENT_ID\">//g"
-	HIDEME_LOC_LIST=(`curl -s $HIDEME_LOC_LIST_URL | fgrep "$HIDEME_LOC_ELEMENT_ID" | sed -e "$HIDEME_LOC_CLEANUP_PATTERN" -e 's/,.*$//g' -e 's/ //g' | sed 'y/àáâãäåăèéêëìíîïòóôõöùúûüşçñ/aaaaaaaeeeeiiiiooooouuuuscn/' | sort`)
-	for HIDEME_LOC in ${HIDEME_LOC_LIST[@]}
-	do
-	    echo -e "$(printf "[%2d]" $LOC_CNTR) ${BLUE}\"$HIDEME_LOC\"${NC}*"
-	    ((LOC_CNTR++))
-	done |xargs -L4 |column -t -S 5 -s $'*' | sed 's/^/   /g'
+	
+	HIDEME_LOC_LIST=(`curl -s $HIDEME_LOC_LIST_URL | fgrep "aria-label=" | fgrep "ServerMap" | sed -e 's/^.*aria-label="//g' -e 's/".*$//g' -e 's/,.*$//g' -e 's/ //g' -e 'y/àáâãäåăèéêëìíîïòóôõöùúûüşçñ/aaaaaaaeeeeiiiiooooouuuuscn/' | sort`)
+	
+	if [ "$HIDEME_LOC_LIST" != "" ]
+	then
+	    for HIDEME_LOC in ${HIDEME_LOC_LIST[@]}
+	    do
+	        echo -e "$(printf "[%2d]" $LOC_CNTR) ${BLUE}\"$HIDEME_LOC\"${NC}*"
+	        ((LOC_CNTR++))
+	    done |xargs -L4 |column -t -S 5 -s $'*' | sed 's/^/   /g'
+	else
+	    echo -e "  ${RED}Failed to fetch VPN locations, maybe the hide.me web page design has changed${NC}"
+	    echo -e "  ${RED}or the page has moved to a different URL. Please contact me via mail or create${NC}"
+	    echo -e "  ${RED}an issue so I can fix this:${NC}"
+	    echo
+	    echo -e "  ${BLUE}https://github.com/jynxified/hide-me-console/issues${NC}"
+	fi
 
 	IFS=$IFS_BACKUP
 }
@@ -321,6 +342,25 @@ function disconnectVpn {
 }
 
 #
+# Check whether the list of available VPN locations is populated or empty.
+#
+# Return values:
+#  - 0 : List of VPN locations is populated.
+#  - 1 : List of VPN locations is empty.
+#
+function verifyConnectionIsPossible {
+
+    if [[ ${#HIDEME_LOC_LIST[@]} -eq 0 ]]
+    then
+        echo -e " ${RED}Cannot connect to a VPN location. The script was unable to retrieve the list of"
+        echo -e " ${RED}available locations. Please either restart the script or use the 'l|locations'"
+        echo -e " ${RED}action to refresh the list."
+        return 1
+    fi
+    return 0
+}
+
+#
 # Prints a detailed help text for a specific action
 #
 # Input parameters:
@@ -419,7 +459,7 @@ echo
 echo -e "----------------------------------------------------------------------------------"
 echo -e "                             ${BOLD_BLUE}>>${NC}   ${MAGENTA}hide${WHITE}.me${BOLD_BLUE}/${YELLOW}console${BOLD_BLUE}   <<${NC}"
 echo -e "----------------------------------------------------------------------------------"
-echo -e "                                   ${BOLD}Version 1.1.0${NC}"
+echo -e "                                   ${BOLD}Version 1.2.0${NC}"
 echo -e "----------------------------------------------------------------------------------"
 echo -e "    ${ICON_MAIL}jynxified@proton.me | ${ICON_GITHUB} ${BLUE}github.com/jynxified${NC} | ${ICON_BLOG}${BLUE}jynxified.wordpress.com${NC}"
 echo -e "----------------------------------------------------------------------------------"
@@ -430,7 +470,7 @@ then
     echo -e "${YELLOW}Buddy, you don't need any arguments for this program. Also, it doesn't have any you${NC}"
     echo -e "${YELLOW}could use. It's an interactive console. Just run it as is and see what happens \U1F609.${NC}"
     echo
-    echo -e "${YELLOW}See the README if you need more information. That's what it's for.${NC}"
+    echo -e "${YELLOW}Take a look at the README if you need more information. That's what it's for.${NC}"
     exit
 fi
 
@@ -466,27 +506,37 @@ do
 	if [[ "$HIDEME_ACTION" =~ ^connect' ' ]] || [[ "$HIDEME_ACTION" =~ ^c' ' ]] || [ "$HIDEME_ACTION" == "connect" ] || [ "$HIDEME_ACTION" == "c" ]  # Action: connect
 	then
 	
-		NEW_VPN=$(echo $HIDEME_ACTION | sed -E 's/^c(onnect)?[ ]?//g')
-		if [ "$NEW_VPN" == "" ]
-		then
-		    NEW_VPN=$(shuffleVpnLocation)
+	    verifyConnectionIsPossible
+	    if [[ $? -eq 0 ]]
+	    then
+		    NEW_VPN=$(echo $HIDEME_ACTION | sed -E 's/^c(onnect)?[ ]?//g')
+		    if [ "$NEW_VPN" == "" ]
+		    then
+		        NEW_VPN=$(shuffleVpnLocation)
+		    fi
+		    
+		    printf "\r ${YELLOW}${BLINK}Connecting transiently...${NC}\r"
+		    connectVpn $NEW_VPN "1"
 		fi
 		
-		printf "\r ${YELLOW}${BLINK}Connecting transiently...${NC}\r"
-		connectVpn $NEW_VPN "1"
 		echo -e " $(getVpnStatus)"
 
 	elif [[ "$HIDEME_ACTION" =~ ^pconnect' ' ]] || [[ "$HIDEME_ACTION" =~ ^p' ' ]] || [ "$HIDEME_ACTION" == "pconnect" ] || [ "$HIDEME_ACTION" == "p" ]  # Action: pconnect
 	then
 		
-		NEW_VPN=$(echo $HIDEME_ACTION | sed -E 's/^p(connect)?[ ]?//g')
-		if [ "$NEW_VPN" == "" ]
-		then
-		    NEW_VPN=$(shuffleVpnLocation)
+		verifyConnectionIsPossible
+	    if [[ $? -eq 0 ]]
+	    then
+		    NEW_VPN=$(echo $HIDEME_ACTION | sed -E 's/^p(connect)?[ ]?//g')
+		    if [ "$NEW_VPN" == "" ]
+		    then
+		        NEW_VPN=$(shuffleVpnLocation)
+		    fi
+		    
+		    printf "\r ${YELLOW}${BLINK}Connecting persistently...${NC}\r"
+		    connectVpn $NEW_VPN "2"
 		fi
 		
-		printf "\r ${YELLOW}${BLINK}Connecting persistently...${NC}\r"
-		connectVpn $NEW_VPN "2"
 		echo -e " $(getVpnStatus)"
 		
 	elif [ "$HIDEME_ACTION" == "disconnect" ] || [ "$HIDEME_ACTION" == "d" ] # Action: disconnect
@@ -506,21 +556,25 @@ do
 	elif [ "$HIDEME_ACTION" == "shuffle" ] || [ "$HIDEME_ACTION" == "s" ] # Action: shuffle
 	then
 	
-	    NEW_VPN=$(shuffleVpnLocation)
-	    if [ "$NEW_VPN" != "" ]
+    	verifyConnectionIsPossible
+	    if [[ $? -eq 0 ]]
 	    then
-	        CONNECT_MODE="1"
-    	    CONNECT_MODE_TEXT="transiently"
-	        if [ "$(isCurrentVpnPersistent)" != "0" ]
+	        NEW_VPN=$(shuffleVpnLocation)
+	        if [ "$NEW_VPN" != "" ]
 	        then
-	            CONNECT_MODE="2"
-                CONNECT_MODE_TEXT="persistently"
+	            CONNECT_MODE="1"
+        	    CONNECT_MODE_TEXT="transiently"
+	            if [ "$(isCurrentVpnPersistent)" != "0" ]
+	            then
+	                CONNECT_MODE="2"
+                    CONNECT_MODE_TEXT="persistently"
+	            fi
+	            
+	            printf "\r ${YELLOW}${BLINK}Connecting $CONNECT_MODE_TEXT...${NC}\r"
+		        connectVpn $NEW_VPN $CONNECT_MODE
+	        else
+	            echo -e " ${RED}Failed to shuffle a unique VPN location, try again or use a manual disconnect|connect.${NC}"
 	        fi
-	        
-	        printf "\r ${YELLOW}${BLINK}Connecting $CONNECT_MODE_TEXT...${NC}\r"
-		    connectVpn $NEW_VPN $CONNECT_MODE
-	    else
-	        echo -e " ${RED}Failed to shuffle a unique VPN location, try again or use a manual disconnect|connect.${NC}"
 	    fi
 
 	    echo -e " $(getVpnStatus)"
@@ -528,19 +582,24 @@ do
 	elif [ "$HIDEME_ACTION" == "next" ] || [ "$HIDEME_ACTION" == "n" ] # Action: next
 	then
 	
-	    CONNECT_MODE="1"
-	    CONNECT_MODE_TEXT="transiently"
-        if [ "$(isCurrentVpnPersistent)" != "0" ]
-        then
-            CONNECT_MODE="2"
-            CONNECT_MODE_TEXT="persistently"
-        fi
-	
-	    NEW_VPN=$(nextVpnLocationId)
-        
-        printf "\r ${YELLOW}${BLINK}Connecting $CONNECT_MODE_TEXT...${NC}\r"
-        
-	    connectVpn $NEW_VPN $CONNECT_MODE
+	    verifyConnectionIsPossible
+	    if [[ $? -eq 0 ]]
+	    then
+	        CONNECT_MODE="1"
+	        CONNECT_MODE_TEXT="transiently"
+            if [ "$(isCurrentVpnPersistent)" != "0" ]
+            then
+                CONNECT_MODE="2"
+                CONNECT_MODE_TEXT="persistently"
+            fi
+	    
+	        NEW_VPN=$(nextVpnLocationId)
+            
+            printf "\r ${YELLOW}${BLINK}Connecting $CONNECT_MODE_TEXT...${NC}\r"
+            
+	        connectVpn $NEW_VPN $CONNECT_MODE
+	    fi
+	    
 	    echo -e " $(getVpnStatus)"
 	
 	elif [ "$HIDEME_ACTION" == "info" ] || [ "$HIDEME_ACTION" == "i" ] # Action: info
