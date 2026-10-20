@@ -360,7 +360,7 @@ If you run the system tray script installation again while the Connection Status
 
 ## ## Disclaimer
 
-The hide.me/console is provided "as is" without any warranty of any kind, either expressed or implied. Use it entirely at your own risk. The author (that's me) shall not be liable for any damages, data loss, system failures, or serious trouble you, your relatives, their neighbors or beloved pets might get into caused by the use or misuse of it.
+The **hide.me/console** and all its components are provided "as is" without any warranty of any kind, either expressed or implied. Use it entirely at your own risk. The author (that's me) shall not be liable for any damages, data loss, system failures, or serious trouble you, your relatives, their neighbors or beloved pets might get into caused by the use or misuse of them.
 
 ## ## License
 
@@ -386,6 +386,7 @@ Also, check out my BLOG for news about Cybersecurity, Security Vulnerabilities, 
 
 ## ## History
 
+* **1.2.0 (2026-10-20):** Added system tray status indicator (as separate script); added installer; fetching VPN locations updated to match the new hide.me page design; added error handling in case the list of available locations cannot be retrieved.
 * **1.1.0 (2026-09.30):** Added action "pconnect" and handling of persistent connections; added hide.me access token check; improved output.
 * **1.0.7 (2026-08-09):** Optimized IP information lookup and display.
 * **1.0.6 (2026-07-30):** Location names no longer need to be case-sensitive, and entering partial names is now supported.
