@@ -6,7 +6,7 @@ ____     _     _     _                             __                       _   
  / / /  | | | | | (_| |  __/_| | | | | |  __/  / / (_| (_) | | | \__ \ (_) | |  __/  \ \ \ 
 /_/_/   |_| |_|_|\__,_|\___(_)_| |_| |_|\___| /_/ \___\___/|_| |_|___/\___/|_|\___|   \_\_\
 
-                         ::: Version 1.2.0 | @Jynx :::
+                                ::: Version 1.2.1 | @Jynx :::
 
    _ Mail ____________  _ GitHub ____________________   _ BLOG ________________________
    jynxified@proton.me | https://github.com/jynxified | https://jynxified.wordpress.com
@@ -41,13 +41,19 @@ If there’s no active connection, the padlock turns red instead, displaying you
 - **Helping hand:** Integrated help for all actions.
 - **Soft landing:** Doesn't destroy your life in case you do something wrong or stupid, but helps you gracefully instead.
 
-## ## What's new in Version 1.2.0?
+## ## What's new in version 1.2.0?
 
 Hold onto your pants, folks, because here comes the most mind-blowing dose of shiny new features and bug fixes ever:
 
 * **Just like that:** The folks over at hide.me recently went ahead and changed the webpage hosting their VPN locations, which broke the hide.me/console’s ability to fetch them automatically. Those cheeky little rascals! Well, this issue has been updated in the current version, so locations are being retrieved properly once again.
 * **Color, at last:** The status of your current VPN connection is displayed via a system tray icon. This way, you can check whether you're connected or not at any time without having to launch the **hide.me/console**.
 * **Doesn’t get any easier than this:** The **hide.me/console**, the system tray icon, and all required add-ons can now be installed via a handy installer script. Just run it and be happy.
+
+## ...and what's new in version 1.2.1?
+
+Usually, I only list the features and changes for a single release. However, version 1.2.1 is a small bug-fixing add-on to 1.2.0, so as an exception, you’re getting two info blocks this time around for the price of one.
+
+* **Proper assassination:** The VPN Connection Status Indicator script now flawlessly checks for any running instances and terminates them properly before starting a new one. Version 1.2.0 had some hiccups here. Those are gone now. Gone, I tell ya!
 
 ## ## Prerequisites
 
@@ -354,10 +360,6 @@ By the way, in case you haven't figured it out yourself: the "d" in "dexit" stan
 
 "`dexit`" or "`x`" will both do the trick here. Wait ... what? Why "x", you ask? Why not "d"? Because "d" is already taken!
 
-## ## Known issues
-
-If you run the system tray script installation again while the Connection Status Indicator script is running, you might occasionally end up with two system tray icons. The same goes for launching the script manually while an instance is already running. The detection and termination routine for running instances isn't quite perfected yet, this will definitely be improved in the next release. During normal system boots, however, there are no known issues of this kind that I'm aware of.
-
 ## ## Disclaimer
 
 The **hide.me/console** and all its components are provided "as is" without any warranty of any kind, either expressed or implied. Use it entirely at your own risk. The author (that's me) shall not be liable for any damages, data loss, system failures, or serious trouble you, your relatives, their neighbors or beloved pets might get into caused by the use or misuse of them.
@@ -388,6 +390,7 @@ Also, check out my BLOG for news about Cybersecurity, Security Vulnerabilities, 
 
 ## ## History
 
+* **1.2.1 (2026-10-21):** Optimized termination of a running instance of the status indicator.
 * **1.2.0 (2026-10-20):** Added system tray status indicator (as separate script); added installer; fetching VPN locations updated to match the new hide.me page design; added error handling in case the list of available locations cannot be retrieved.
 * **1.1.0 (2026-09.30):** Added action "pconnect" and handling of persistent connections; added hide.me access token check; improved output.
 * **1.0.7 (2026-08-09):** Optimized IP information lookup and display.

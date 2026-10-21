@@ -84,6 +84,24 @@ function log {
 }
 
 #
+# Check if there's a running session of the status indicator, and if so, kill it.
+#
+function killRunningSession {
+
+    ps -af | fgrep "hide-me-status-indicator" | fgrep -v "grep" | fgrep -v "$$" | awk '{print $2}' | while read pid
+    do 
+        kill -9 $pid >/dev/null 2>&1
+        log "Removed running instance of the VPN connection status indicator with PID $pid"
+    done
+    
+    ps -af | fgrep "yad" | fgrep "hideme" | fgrep -v "grep" | awk '{print $2}' | while read pid
+    do
+        kill -9 $pid >/dev/null 2>&1
+        log "Removed running instance of yad with PID $pid"
+    done
+}
+
+#
 # Generate the system tray icons that indicate whether a VPN connection is active or not.
 #
 function createIcons {
@@ -248,19 +266,15 @@ then
     exit
 fi
 
-log "Launching status indicator..."
+log "Launching status indicator (PID: $$)..."
 
-# Check if another instance of the status indicator is already running, and if so, kill it first.
-ps -af | egrep "hide-me-status-indicator" | fgrep -v "$$" | fgrep -v "grep" | awk '{print $2}' | while read pid
-do 
-    kill -9 $pid 2>/dev/null
-    log "Removed currently running instance of the status indicator with PID $pid"
-done
+# Check if another instance of the status indicator is currently running, and if so, kill it first.
+killRunningSession
 
 # Create tray icons.
 createIcons
 
-# Start yad as co-process.
+# Start yad as co-process and register it.
 coproc YAD { yad --notification --listen --image="$ICON_PATH_UNKNOWN" --text="VPN status unknown" --menu="Quit!quit"; }
 
 log "YAD coproc PID: $YAD_PID"
