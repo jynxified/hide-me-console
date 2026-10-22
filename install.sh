@@ -486,6 +486,8 @@ function installHideMeStatusIndicatorLauncher {
     installStepNote "Path: ${MAGENTA}$launcherDestPath${NC}"
     showInProgressIndicator
     
+    
+    
     (
         echo "[Desktop Entry]"
         echo "Type=Application"
@@ -582,6 +584,7 @@ finishInstallBlock
 # Install hide.me VPN status indicator
 startInstallBlock "Installing hide.me ${GREEN}VPN${NC} ${BOLD}Status Indicator${NC}..."
     installHideMeStatusIndicator
+    createFolder "$DEST_PATH_STATUS_INDICATOR_LAUNCHER"
     installHideMeStatusIndicatorLauncher
 finishInstallBlock
 

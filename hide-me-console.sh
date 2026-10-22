@@ -8,7 +8,7 @@
 # jynxified@proton.me
 # 
 # History:
-# 1.2.1 (2026-10-21) - Optimized termination of a running instance of the status indicator.   
+# 1.2.1 (2026-10-21) - Optimized termination of a running instance of the status indicator.
 # 1.2.0 (2026-10-20) - Added system tray status indicator (as separate script); added installer;
 #                      fetching VPN locations updated to match the new hide.me page design; added
 #                      error handling in case the list of available locations cannot be retrieved.
