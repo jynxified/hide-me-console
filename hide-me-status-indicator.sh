@@ -88,17 +88,20 @@ function log {
 #
 function killRunningSession {
 
-    ps -af | fgrep "hide-me-status-indicator" | fgrep -v "grep" | fgrep -v "$$" | awk '{print $2}' | while read pid
+    ps -ef | fgrep "hide-me-status-indicator" | fgrep -v "grep" | fgrep -v "$$" | awk '{print $2}' | while read pid
     do 
-        kill -9 $pid >/dev/null 2>&1
+        kill -15 $pid >/dev/null 2>&1
         log "Removed running instance of the VPN connection status indicator with PID $pid"
+        sleep 0.5
     done
     
-    ps -af | fgrep "yad" | fgrep "hideme" | fgrep -v "grep" | awk '{print $2}' | while read pid
+    ps -ef | fgrep "yad" | fgrep "hideme" | fgrep -v "grep" | awk '{print $2}' | while read pid
     do
-        kill -9 $pid >/dev/null 2>&1
+        kill -15 $pid >/dev/null 2>&1
         log "Removed running instance of yad with PID $pid"
+        sleep 0.5
     done
+
 }
 
 #

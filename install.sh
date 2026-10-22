@@ -340,6 +340,43 @@ function downloadInstallPackage {
 }
 
 #
+# Removes all no longer required components of the installation process.
+#
+#  - [1] : The destination path for the downloaded installation archive.
+#  - [2] : The path for the uncompressed installation data.
+#
+function cleanupInstallPackage {
+    
+    local download_dest_path=$1
+    local uncompress_dest_path=$2
+    
+    startInstallStep "Cleaning up..."
+    
+    local cleanup_done=0
+    
+    if [ -e "$download_dest_path" ]
+    then
+        cleanup_done=1
+        showInProgressIndicator
+        rm -rf "$download_dest_path"
+        assertInstallAction $? "Cleaned up: $download_dest_path" "Failed to clean up: $download_dest_path"
+    fi
+    
+    if [ -e "$uncompress_dest_path" ]
+    then
+        cleanup_done=1
+        showInProgressIndicator
+        rm -rf "$uncompress_dest_path"
+        assertInstallAction $? "Cleaned up: $uncompress_dest_path" "Failed to clean up: $uncompress_dest_path"
+    fi
+    
+    if [[ $cleanup_done -eq 0 ]]
+    then
+        installStepSucceeded "Nothing to cleanup, everything is shiny and bright"
+    fi
+}
+
+#
 # Create a folder.
 #
 # Input parameters:
@@ -586,6 +623,7 @@ startInstallBlock "Installing hide.me ${GREEN}VPN${NC} ${BOLD}Status Indicator${
     installHideMeStatusIndicator
     createFolder "$DEST_PATH_STATUS_INDICATOR_LAUNCHER"
     installHideMeStatusIndicatorLauncher
+    cleanupInstallPackage "$INSTALL_PACKAGE_PATH" "$INSTALL_PACKAGE_UNCOMPRESSED_PATH"
 finishInstallBlock
 
 # Finishing message
