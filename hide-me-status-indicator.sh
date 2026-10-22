@@ -16,6 +16,8 @@
 # Licensed under "CC BY-NC-ND 4.0" (https://creativecommons.org/licenses/by-nc-nd/4.0/).
 ####################################################################################################
 
+cd ~ || exit 1
+
 # Text colors & styles
 YELLOW="\e[33m"
 NC="\e[0m"
