@@ -181,7 +181,7 @@ function getVpnList {
 	    do
 	        echo -e "$(printf "[%2d]" $LOC_CNTR) ${BLUE}\"$HIDEME_LOC\"${NC}*"
 	        ((LOC_CNTR++))
-	    done |xargs -L4 |column -t -S 5 -s $'*' | sed 's/^/   /g'
+	    done |xargs -L4 |column -t -o '     ' -s $'*' | sed 's/^/   /g'
 	else
 	    echo -e "  ${RED}Failed to fetch VPN locations, maybe the hide.me web page design has changed${NC}"
 	    echo -e "  ${RED}or the page has moved to a different URL. Please contact me via mail or create${NC}"
